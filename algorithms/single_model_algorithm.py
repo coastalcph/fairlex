@@ -57,11 +57,7 @@ class SingleModelAlgorithm(GroupAlgorithm):
         x = x.to(self.device)
         y_true = y_true.to(self.device)
         g = self.grouper.metadata_to_group(metadata).to(self.device)
-        if self.scaler:
-            with torch.cuda.amp.autocast():
-                outputs = self.model(x)
-        else:
-            outputs = self.model(x)
+        outputs = self.model(x)
 
         results = {
             'g': g,
@@ -89,8 +85,13 @@ class SingleModelAlgorithm(GroupAlgorithm):
                 - objective (float)
         """
         assert not self.is_training
-        results = self.process_batch(batch)
-        objectives = self.objective(results)
+        if self.scaler:
+            with torch.cuda.amp.autocast():
+                results = self.process_batch(batch)
+                objectives = self.objective(results)
+        else:
+                results = self.process_batch(batch)
+                objectives = self.objective(results)
         if isinstance(objectives, tuple):
             results['objective'] = objectives[0].item()
             results['adv_objective'] = objectives[1].item()
@@ -115,8 +116,13 @@ class SingleModelAlgorithm(GroupAlgorithm):
         """
         assert self.is_training
         # process batch
-        results = self.process_batch(batch)
-        self._update(results)
+        if self.scaler:
+            with torch.cuda.amp.autocast():
+                results = self.process_batch(batch)
+                self._update(results)
+        else:
+            results = self.process_batch(batch)
+            self._update(results)
         # log results
         self.update_log(results)
         return self.sanitize_dict(results)
@@ -143,6 +149,7 @@ class SingleModelAlgorithm(GroupAlgorithm):
 
     def _update_fp16(self, objective):
         self.scaler.scale(objective).backward()
+        self.scaler.unscale_(self.optimizer)
         if self.max_grad_norm:
             clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
         self.scaler.step(self.optimizer)

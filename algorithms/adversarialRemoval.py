@@ -113,6 +113,8 @@ class AdversarialRemoval(SingleModelAlgorithm):
         # update
         if self.scaler:
             self.scaler.scale(total_objective).backward()
+            self.scaler.unscale_(self.optimizer)
+            self.scaler.unscale_(self.adv_optimizer)
         else:
             total_objective.backward()
         # update

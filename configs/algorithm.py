@@ -28,8 +28,8 @@ algorithm_defaults = {
     },
     'adversarialRemoval': {
         'train_loader': 'group',
-        'uniform_over_groups': False,
-        'distinct_groups': False,
+        'uniform_over_groups': True,
+        'distinct_groups': True,
         'eval_loader': 'standard',
         'adv_lambda': 1.0,
     },
