@@ -10,7 +10,7 @@ from wilds.common.metrics.all_metrics import Accuracy, MultiTaskAccuracy, MSE, m
 
 
 def binary_logits_to_pred_v2(logits):
-    return (torch.sigmoid(logits) > 0.5).long()
+    return (torch.sigmoid(logits.float()) > 0.5).long()
 
 
 class F1(Metric):
@@ -66,7 +66,7 @@ transforms = ['bert', 'image_base', 'image_resize_and_center_crop', 'poverty_tra
 models = ['resnet18_ms', 'resnet50', 'resnet34', 'wideresnet50',
          'densenet121', 'bert-base-uncased', 'distilbert-base-uncased',
          'gin-virtual', 'logistic_regression', 'code-gpt-py']
-algorithms = ['ERM', 'groupDRO', 'deepCORAL', 'IRM', 'adversarialRemoval']
+algorithms = ['ERM', 'groupDRO', 'deepCORAL', 'IRM', 'adversarialRemoval', 'minMax']
 optimizers = ['SGD', 'Adam', 'AdamW']
 schedulers = ['linear_schedule_with_warmup', 'ReduceLROnPlateau', 'StepLR']
 

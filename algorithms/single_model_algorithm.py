@@ -4,6 +4,7 @@ from scheduler import initialize_scheduler
 from optimizer import initialize_optimizer
 from torch.nn.utils import clip_grad_norm_
 
+
 class SingleModelAlgorithm(GroupAlgorithm):
     """
     An abstract class for algorithm that has one underlying model.
@@ -33,6 +34,12 @@ class SingleModelAlgorithm(GroupAlgorithm):
         )
         self.model = model
 
+        # Create scaler for mixed precision
+        if torch.cuda.is_available() and config.fp16:
+            self.scaler = torch.cuda.amp.GradScaler()
+        else:
+            self.scaler = None
+
     def process_batch(self, batch):
         """
         A helper function for update() and evaluate() that processes the batch
@@ -50,7 +57,11 @@ class SingleModelAlgorithm(GroupAlgorithm):
         x = x.to(self.device)
         y_true = y_true.to(self.device)
         g = self.grouper.metadata_to_group(metadata).to(self.device)
-        outputs = self.model(x)
+        if self.scaler:
+            with torch.cuda.amp.autocast():
+                outputs = self.model(x)
+        else:
+            outputs = self.model(x)
 
         results = {
             'g': g,
@@ -121,11 +132,24 @@ class SingleModelAlgorithm(GroupAlgorithm):
         results['objective'] = objective.item()
         # update
         self.model.zero_grad()
-        objective.backward()
-        if self.max_grad_norm:
-            clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
-        self.optimizer.step()
+        if self.scaler:
+            self._update_fp16(objective)
+        else:
+            self._update_fp32(objective)
         self.step_schedulers(
             is_epoch=False,
             metrics=results,
             log_access=False)
+
+    def _update_fp16(self, objective):
+        self.scaler.scale(objective).backward()
+        if self.max_grad_norm:
+            clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+        self.scaler.step(self.optimizer)
+        self.scaler.update()
+
+    def _update_fp32(self, objective):
+        objective.backward()
+        if self.max_grad_norm:
+            clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+        self.optimizer.step()

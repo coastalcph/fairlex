@@ -57,6 +57,11 @@ class GroupAlgorithm(Algorithm):
                     results['y_pred'],
                     results['y_true'],
                     return_dict=False).item()
+            if 'adv_objective' in self.logged_fields:
+                batch_log['Adv-F1'] = self.logged_metrics[-1].compute(
+                    results['adv_y_pred'],
+                    results['g'].unsqueeze(1),
+                    return_dict=False).item()
             count = results['y_true'].numel()
 
         # transfer other statistics in the results dictionary
@@ -193,6 +198,10 @@ class GroupAlgorithm(Algorithm):
         for metric in self.logged_metrics:
             results_str += (
                 f'{metric.agg_metric_field}: {log[metric.agg_metric_field]:.3f}\n'
+            )
+        if 'adv_objective' in self.logged_fields:
+            results_str += (
+                f'Adv-F1: {log["Adv-F1"]:.3f}\n'
             )
 
         # Process logs for each group

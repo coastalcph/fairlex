@@ -52,10 +52,16 @@ class AdversarialRemoval(SingleModelAlgorithm):
         x, y_true, metadata = batch
         x = x.to(self.device)
         y_true = y_true.to(self.device)
-        features = self.featurizer(x)
         g = self.grouper.metadata_to_group(metadata).to(self.device)
-        outputs = self.classifier(features)
-        adv_outputs = self.adv_classifier(features)
+        if self.scaler:
+            with torch.cuda.amp.autocast():
+                features = self.featurizer(x)
+                outputs = self.classifier(features)
+                adv_outputs = self.adv_classifier(features)
+        else:
+            features = self.featurizer(x)
+            outputs = self.classifier(features)
+            adv_outputs = self.adv_classifier(features)
 
         # package the results
         results = {
@@ -87,15 +93,23 @@ class AdversarialRemoval(SingleModelAlgorithm):
         # update
         self.model.zero_grad()
         self.adv_model.zero_grad()
-        objective[0].backward(retain_graph=True)
-        objective[1].backward()
+        total_objective = objective[0] + objective[1]
+        if self.scaler:
+            self.scaler.scale(total_objective).backward()
+        else:
+            total_objective.backward()
         # update
         if self.max_grad_norm:
             clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
         if self.max_grad_norm:
             clip_grad_norm_(self.adv_model.parameters(), self.max_grad_norm)
-        self.optimizer.step()
-        self.adv_optimizer.step()
+        if self.scaler:
+            self.scaler.step(self.optimizer)
+            self.scaler.step(self.adv_optimizer)
+            self.scaler.update()
+        else:
+            self.optimizer.step()
+            self.adv_optimizer.step()
         self.step_schedulers(
             is_epoch=False,
             metrics=results,

@@ -140,6 +140,7 @@ class ECtHRDataset(WILDSDataset):
                     example = json.loads(line)
                     example.pop('silver_rationales', None)
                     example.pop('gold_rationales', None)
+                    example.pop('court_assessment_references', None)
                     example['labels'] = [1 if article in example['violated_articles'] else 0 for article in
                                          ECHR_ARTICLES]
                     example['defendant'] = 0 if len(set(example['defendants']).

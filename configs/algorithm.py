@@ -31,6 +31,12 @@ algorithm_defaults = {
         'uniform_over_groups': False,
         'distinct_groups': False,
         'eval_loader': 'standard',
-        'adv_lambda': 0.1,
+        'adv_lambda': 1.0,
+    },
+    'minMax': {
+        'train_loader': 'group',
+        'uniform_over_groups': True,
+        'distinct_groups': True,
+        'eval_loader': 'standard',
     }
 }

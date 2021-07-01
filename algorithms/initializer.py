@@ -4,6 +4,7 @@ from algorithms.groupDRO import GroupDRO
 from algorithms.deepCORAL import DeepCORAL
 from algorithms.IRM import IRM
 from algorithms.adversarialRemoval import AdversarialRemoval
+from algorithms.minMax import MinMax
 from configs.supported import algo_log_metrics, losses
 
 def initialize_algorithm(config, datasets, train_grouper):
@@ -71,6 +72,14 @@ def initialize_algorithm(config, datasets, train_grouper):
             n_train_steps=n_train_steps)
     elif config.algorithm == 'adversarialRemoval':
         algorithm = AdversarialRemoval(
+            config=config,
+            d_out=d_out,
+            grouper=train_grouper,
+            loss=loss,
+            metric=metric,
+            n_train_steps=n_train_steps)
+    elif config.algorithm == 'minMax':
+        algorithm = MinMax(
             config=config,
             d_out=d_out,
             grouper=train_grouper,

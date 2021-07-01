@@ -83,6 +83,7 @@ def main():
     parser.add_argument('--weight_decay', type=float)
     parser.add_argument('--max_grad_norm', type=float)
     parser.add_argument('--optimizer_kwargs', nargs='*', action=ParseKwargs, default={})
+    parser.add_argument('--fp16', type=bool)
 
     # Scheduler
     parser.add_argument('--scheduler', choices=supported.schedulers)

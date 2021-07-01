@@ -1,3 +1,5 @@
+import json
+
 from transformers import LongformerForMaskedLM, AutoModelForMaskedLM, AutoTokenizer
 import copy
 import torch
@@ -63,10 +65,19 @@ def main():
         config.attention_mode = "longformer"
         config.model_type = "longformer"
 
+        # Save model and tokenizer
         lfm.save_pretrained('legal-longformer')
         tokenizer.save_pretrained('legal-longformer')
 
+        # Amend configuration file
+        with open('legal-longformer/config.json') as config_file:
+            configuration = json.load(config_file)
+            configuration['model_type'] = "longformer"
+        with open('legal-longformer/config.json', 'w') as config_file:
+            json.dump(configuration, config_file)
+
     else:
+        # Save model and tokenizer
         bert.save_pretrained('legal-longbert')
         tokenizer.save_pretrained('legal-longbert')
 
