@@ -8,15 +8,31 @@ from pytorch_revgrad import RevGrad
 
 
 class AdversarialRemoval(SingleModelAlgorithm):
+    """
+        Adversarial Attribute Removal.
+
+        Original paper:
+            @inproceedings{elazar-goldberg-2018-adversarial,
+            title = "Adversarial Removal of Demographic Attributes from Text Data",
+                author = "Elazar, Yanai  and Goldberg, Yoav",
+                booktitle = "Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing",
+                year = "2018",
+                address = "Brussels, Belgium",
+                publisher = "Association for Computational Linguistics",
+                url = "https://www.aclweb.org/anthology/D18-1002",
+            }
+
+        """
     def __init__(self, config, d_out, grouper, loss,
             metric, n_train_steps):
 
         featurizer, classifier = initialize_model(config, d_out=d_out, is_featurizer=True)
         adv_classifier = torch.nn.Linear(featurizer.d_out, grouper.n_groups if grouper.n_groups > 2 else 1)
-        rev_grad = RevGrad(alpha=config.adv_lambda)
         featurizer = featurizer.to(config.device)
         classifier = classifier.to(config.device)
+        # extra modules for adversarial classifier
         adv_classifier = adv_classifier.to(config.device)
+        rev_grad = RevGrad(alpha=config.adv_lambda)
         self.adv_lambda = config.adv_lambda
 
         # set models
@@ -48,7 +64,7 @@ class AdversarialRemoval(SingleModelAlgorithm):
         """
         Override
         """
-        # forward pass
+        # forward pass for both classifier and adversarial classifier
         x, y_true, metadata = batch
         x = x.to(self.device)
         y_true = y_true.to(self.device)
@@ -90,10 +106,11 @@ class AdversarialRemoval(SingleModelAlgorithm):
         objective = self.objective(results)
         results['objective'] = objective[0].item()
         results['adv_objective'] = objective[1].item()
-        # update
         self.model.zero_grad()
         self.adv_model.zero_grad()
+        # combine losses
         total_objective = objective[0] + objective[1]
+        # update
         if self.scaler:
             self.scaler.scale(total_objective).backward()
         else:
