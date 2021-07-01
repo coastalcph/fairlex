@@ -76,13 +76,9 @@ class DeepCORAL(SingleModelAlgorithm):
         x = x.to(self.device)
         y_true = y_true.to(self.device)
         g = self.grouper.metadata_to_group(metadata).to(self.device)
-        if self.scaler:
-            with torch.cuda.amp.autocast():
-                features = self.featurizer(x)
-                outputs = self.classifier(features)
-        else:
-            features = self.featurizer(x)
-            outputs = self.classifier(features)
+        features = self.featurizer(x)
+        outputs = self.classifier(features)
+
         # package the results
         results = {
             'g': g,
