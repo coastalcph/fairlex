@@ -266,11 +266,23 @@ def main():
             config=config,
             epoch_offset=epoch_offset,
             best_val_metric=best_val_metric)
+
+        logger.write('-' * 100 + '\n')
+        logger.write('Evaluation\n')
+        logger.write('-' * 100 + '\n')
+        best_epoch, best_val_metric = load(algorithm, model_prefix + 'epoch:best_model.pth')
+        evaluate(
+            algorithm=algorithm,
+            datasets=datasets,
+            epoch=best_epoch,
+            general_logger=logger,
+            config=config)
+
     else:
         if config.eval_epoch is None:
             eval_model_path = model_prefix + 'epoch:best_model.pth'
         else:
-            eval_model_path = model_prefix +  f'epoch:{config.eval_epoch}_model.pth'
+            eval_model_path = model_prefix + f'epoch:{config.eval_epoch}_model.pth'
         best_epoch, best_val_metric = load(algorithm, eval_model_path)
         if config.eval_epoch is None:
             epoch = best_epoch
