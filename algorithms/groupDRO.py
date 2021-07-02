@@ -88,17 +88,18 @@ class GroupDRO(SingleModelAlgorithm):
                 - metrics (Tensor)
                 - objective (float)
         """
-        # compute group losses
-        group_losses, _, _ = self.loss.compute_group_wise(
-            results['y_pred'],
-            results['y_true'],
-            results['g'],
-            self.grouper.n_groups,
-            return_dict=False)
-        # update group weights
-        self.group_weights = self.group_weights * torch.exp(self.group_weights_step_size*group_losses.data)
-        self.group_weights = (self.group_weights/(self.group_weights.sum()))
-        # save updated group weights
-        results['group_weight'] = self.group_weights
+        with torch.cuda.amp.autocast(enabled=self.use_scaler):
+            # compute group losses
+            group_losses, _, _ = self.loss.compute_group_wise(
+                results['y_pred'],
+                results['y_true'],
+                results['g'],
+                self.grouper.n_groups,
+                return_dict=False)
+            # update group weights
+            self.group_weights = self.group_weights * torch.exp(self.group_weights_step_size*group_losses.data)
+            self.group_weights = (self.group_weights/(self.group_weights.sum()))
+            # save updated group weights
+            results['group_weight'] = self.group_weights
         # update model
         super()._update(results)

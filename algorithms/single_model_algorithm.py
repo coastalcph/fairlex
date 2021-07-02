@@ -37,8 +37,10 @@ class SingleModelAlgorithm(GroupAlgorithm):
         # Create scaler for mixed precision
         if torch.cuda.is_available() and config.fp16:
             self.scaler = torch.cuda.amp.GradScaler()
+            self.use_scaler = True
         else:
             self.scaler = None
+            self.use_scaler = False
 
     def process_batch(self, batch):
         """
@@ -57,7 +59,8 @@ class SingleModelAlgorithm(GroupAlgorithm):
         x = x.to(self.device)
         y_true = y_true.to(self.device)
         g = self.grouper.metadata_to_group(metadata).to(self.device)
-        outputs = self.model(x)
+        with torch.cuda.amp.autocast(enabled=self.use_scaler):
+            outputs = self.model(x)
 
         results = {
             'g': g,
@@ -85,13 +88,9 @@ class SingleModelAlgorithm(GroupAlgorithm):
                 - objective (float)
         """
         assert not self.is_training
-        if self.scaler:
-            with torch.cuda.amp.autocast():
-                results = self.process_batch(batch)
-                objectives = self.objective(results)
-        else:
-                results = self.process_batch(batch)
-                objectives = self.objective(results)
+        results = self.process_batch(batch)
+        with torch.cuda.amp.autocast(enabled=self.use_scaler):
+            objectives = self.objective(results)
         if isinstance(objectives, tuple):
             results['objective'] = objectives[0].item()
             results['adv_objective'] = objectives[1].item()
@@ -116,13 +115,8 @@ class SingleModelAlgorithm(GroupAlgorithm):
         """
         assert self.is_training
         # process batch
-        if self.scaler:
-            with torch.cuda.amp.autocast():
-                results = self.process_batch(batch)
-                self._update(results)
-        else:
-            results = self.process_batch(batch)
-            self._update(results)
+        results = self.process_batch(batch)
+        self._update(results)
         # log results
         self.update_log(results)
         return self.sanitize_dict(results)
@@ -134,7 +128,8 @@ class SingleModelAlgorithm(GroupAlgorithm):
         Should be overridden to change algorithm update beyond modifying the objective.
         """
         # compute objective
-        objective = self.objective(results)
+        with torch.cuda.amp.autocast(enabled=self.use_scaler):
+            objective = self.objective(results)
         results['objective'] = objective.item()
         # update
         self.model.zero_grad()
