@@ -47,6 +47,29 @@ dataset_defaults = {
             'pin_memory': True,
         }
     },
+    'scotus': {
+        'split_scheme': 'official',
+        'model': 'legal-longformer',#'allenai/longformer-base-4096',
+        'train_transform': 'bert',#'longformer',
+        'eval_transform': 'bert', #'longformer',
+        'max_token_length': 4096,
+        'loss_function': 'cross_entropy',
+        'algo_log_metric': 'accuracy',
+        'batch_size': 12,
+        'lr': 1e-5,
+        'weight_decay': 0.01,
+        'n_epochs': 10,
+        'n_groups_per_batch': 1,
+        'irm_lambda': 1.0,
+        'coral_penalty_weight': 1.0,
+        'loader_kwargs': {
+            'num_workers': 0,
+            'pin_memory': True,
+        },
+        'process_outputs_function': 'multiclass_logits_to_pred',
+        'val_metric': 'F1-macro_all',
+        'val_metric_decreasing': False
+    },
     'amazon': {
         'split_scheme': 'official',
         'model': 'distilbert-base-uncased',

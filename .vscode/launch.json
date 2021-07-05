@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "run_expt",
+            "type": "python",
+            "request": "launch",
+            "program": "run_expt.py",
+            "args": ["--dataset", "scotus", "--algorithm", "ERM", "--root_dir", "data",
+                "--log_dir", "logs/scotus/decision_direction/ERM", "--save_best", "--seed", "123", "--dataset_kwargs", "groupby_fields=decisionDirection"],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

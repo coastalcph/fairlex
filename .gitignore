@@ -132,3 +132,7 @@ dmypy.json
 /logs
 /data/datasets
 /data/models
+
+# Hidden files
+.*data/scotus_v0.1/
+data/scotus_v0.1/

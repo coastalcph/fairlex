@@ -1,6 +1,6 @@
 from configs.supported import supported_datasets
 
-
+from wilds import get_dataset as wilds_get_dataset
 def get_dataset(dataset, version=None, **dataset_kwargs):
     """
     Returns the appropriate WILDS dataset class.
@@ -24,3 +24,8 @@ def get_dataset(dataset, version=None, **dataset_kwargs):
     elif dataset == 'ledgar':
         from dataloaders.ledgar_dataset import LEDGARDataset
         return LEDGARDataset(version=version, **dataset_kwargs)
+    elif dataset == 'scotus':
+        from dataloaders.scotus_dataset import ScotusDataset
+        return ScotusDataset()
+    else: 
+        return wilds_get_dataset(dataset, version, **dataset_kwargs)

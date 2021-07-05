@@ -71,4 +71,4 @@ optimizers = ['SGD', 'Adam', 'AdamW']
 schedulers = ['linear_schedule_with_warmup', 'ReduceLROnPlateau', 'StepLR']
 
 # supported datasets
-supported_datasets = wilds.supported_datasets + ['ecthr', 'ledgar']
+supported_datasets = wilds.supported_datasets + ['ecthr', 'ledgar', 'scotus']

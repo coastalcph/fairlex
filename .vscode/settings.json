@@ -1,0 +1,20 @@
+{
+    "python.autoComplete.extraPaths": [
+    ],
+    "terminal.integrated.env.osx": {
+        "PYTHONPATH": "${workspaceFolder}/",
+    },
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "${workspaceFolder}/",
+    },
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "${workspaceFolder}/",
+    },
+    "python.envFile": "${workspaceFolder}/.env",
+    "python.linting.enabled": true,
+    "python.languageServer": "Pylance",
+    "python.analysis.extraPaths": [],
+    "jupyter.jupyterServerType": "remote",
+    "python.formatting.provider": "black",
+    "python.pythonPath": "/home/npf290/miniconda3/envs/fairlex/bin/python"
+}
