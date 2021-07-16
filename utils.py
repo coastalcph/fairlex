@@ -8,6 +8,7 @@ import numpy as np
 import torch
 import pandas as pd
 import jsonlines
+from datetime import datetime
 try:
     import wandb
 except Exception as e:
@@ -438,11 +439,13 @@ def read_jsonl(path, data_type, attributes_to_retain=None):
     with jsonlines.open(path) as lines:
         for line_data in lines:
             example = dict(line_data)
-            if str(example['labels']) == 'nan':
-                continue
+            # if str(example['labels']) == 'nan':
+            #     continue
             attributes = example['attributes']
             if attributes_to_retain is not None:
                 attributes = {k:v for k, v in example['attributes'].items() if k in attributes_to_retain}
+            if 'dateDecision' in attributes:
+                attributes['dateDecision'] = datetime.strptime(attributes['dateDecision'], '%m/%d/%Y') 
             if any(str(v) == 'nan' for v in attributes.values()):
                 continue
             example['data_type'] = data_type

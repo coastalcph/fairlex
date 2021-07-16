@@ -17,8 +17,9 @@
             "type": "python",
             "request": "launch",
             "program": "run_expt.py",
-            "args": ["--dataset", "scotus", "--algorithm", "ERM", "--root_dir", "data",
-                "--log_dir", "logs/scotus/decision_direction/ERM", "--save_best", "--seed", "123", "--dataset_kwargs", "groupby_fields=decisionDirection"],
+            "args": ["--dataset", "scotus", "--algorithm", "deepCORAL", "--root_dir", "data",
+                "--log_dir", "logs2/scotus/decision_direction/deepCORAL", "--save_best", "--seed", "123", "--split_scheme", "uniform", 
+            "--dataset_kwargs", "protected_attribute=decisionDirection", "--groupby_fields", "decisionDirection"],
             "console": "integratedTerminal",
             "justMyCode": false
         }

@@ -53,20 +53,19 @@ dataset_defaults = {
         'train_transform': 'bert',#'longformer',
         'eval_transform': 'bert', #'longformer',
         'max_token_length': 4096,
-        'loss_function': 'cross_entropy',
+        'loss_function': 'binary_cross_entropy',
         'algo_log_metric': 'accuracy',
-        'batch_size': 12,
+        'batch_size': 8,
         'lr': 1e-5,
         'weight_decay': 0.01,
         'n_epochs': 10,
-        'n_groups_per_batch': 1,
+        'n_groups_per_batch': 2,
         'irm_lambda': 1.0,
-        'coral_penalty_weight': 1.0,
+        'coral_penalty_weight': 0.1,
         'loader_kwargs': {
             'num_workers': 0,
             'pin_memory': True,
         },
-        'process_outputs_function': 'multiclass_logits_to_pred',
         'val_metric': 'F1-macro_all',
         'val_metric_decreasing': False
     },
@@ -442,7 +441,26 @@ yelp_split_defaults = {
         'val_metric_decreasing': False,
     },
 }
-
+########################################
+### Split-specific defaults for scotus ###
+########################################
+# scotus_split_defaults = {
+#     'official': {
+#         'dataset_kwargs': {
+#             'protected_attribute': 'decisionDirection'
+#         }
+#     },
+#     'temporal':{
+#         'dataset_kwargs': {
+#             'protected_attribute': 'decisionDirection',
+#         }
+#         },
+#     'uniform':{
+#         'dataset_kwargs': {
+#             'protected_attribute': 'issueArea',
+#         }
+#         }
+# }
 ###############################
 ### Split-specific defaults ###
 ###############################
@@ -450,4 +468,5 @@ yelp_split_defaults = {
 split_defaults = {
     'amazon': amazon_split_defaults,
     'yelp': yelp_split_defaults,
+    # 'scotus': scotus_split_defaults
 }

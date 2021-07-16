@@ -24,8 +24,8 @@ def get_dataset(dataset, version=None, **dataset_kwargs):
     elif dataset == 'ledgar':
         from dataloaders.ledgar_dataset import LEDGARDataset
         return LEDGARDataset(version=version, **dataset_kwargs)
-    elif dataset == 'scotus':
+    elif 'scotus' in dataset:
         from dataloaders.scotus_dataset import ScotusDataset
-        return ScotusDataset()
+        return ScotusDataset(version=version, **dataset_kwargs)
     else: 
         return wilds_get_dataset(dataset, version, **dataset_kwargs)
