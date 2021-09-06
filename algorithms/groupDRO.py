@@ -2,6 +2,7 @@ import torch
 from algorithms.single_model_algorithm import SingleModelAlgorithm
 from models.initializer import initialize_model
 
+
 class GroupDRO(SingleModelAlgorithm):
     """
     Group distributionally robust optimization.

@@ -25,6 +25,9 @@ ECHR_ARTICLES = {"2": "Right to life",
                  "P1-1": "Protection of property"
                  }
 
+GENDERS = {'n/a': 0, 'male': 1, 'female': 2}
+AGE_GROUPS = {'n/a': 0, '<=35': 1, '<=65': 2, '>65': 3}
+
 
 class ECtHRDataset(WILDSDataset):
     """
@@ -115,12 +118,14 @@ class ECtHRDataset(WILDSDataset):
 
     def load_metadata(self, data_df):
         # Get metadata
-        columns = ['defendant']
-        metadata_fields = ['defendant']
+        columns = ['defendant', 'age', 'gender']
+        metadata_fields = ['defendant', 'age', 'gender']
         metadata_df = data_df[columns].copy()
         metadata_df.columns = metadata_fields
         ordered_maps = {}
         ordered_maps['defendant'] = range(0, 2)
+        ordered_maps['gender'] = range(0, 3)
+        ordered_maps['age'] = range(0, 4)
         metadata_map, metadata = map_to_id_array(metadata_df, ordered_maps)
         return metadata_fields, torch.from_numpy(metadata.astype('long')), metadata_map
 
@@ -133,6 +138,16 @@ class ECtHRDataset(WILDSDataset):
             raise ValueError(f'Split scheme {self.split_scheme} not recognized')
 
     def read_jsonl(self, data_dir):
+        def age_group(birth_year, jugdment_year):
+            if birth_year == 'n/a':
+                return AGE_GROUPS['n/a']
+            elif jugdment_year - birth_year <= 35:
+                return AGE_GROUPS['<=35']
+            elif jugdment_year - birth_year <= 65:
+                return AGE_GROUPS['<=65']
+            else:
+                return AGE_GROUPS['>65']
+
         data = []
         for subset in ['train', 'val', 'test']:
             with open(os.path.join(data_dir, f'{subset}.jsonl')) as fh:
@@ -145,6 +160,8 @@ class ECtHRDataset(WILDSDataset):
                                          ECHR_ARTICLES]
                     example['defendant'] = 0 if len(set(example['defendants']).
                                                     intersection(EAST_EUROPEAN_COUNTRIES)) else 1
+                    example['gender'] = GENDERS[example['applicant_gender']]
+                    example['age'] = age_group(example['applicant_birth_year'], example['judgment_date'][:4])
                     example['text'] = ' [SEP] '.join(example['facts'])
                     example['data_type'] = subset
                     data.append(example)

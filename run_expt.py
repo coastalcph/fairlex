@@ -118,16 +118,16 @@ def main():
     # set device
     config.device = torch.device("cuda:" + str(config.device)) if torch.cuda.is_available() else torch.device("cpu")
 
-    ## Initialize logs
+    # Initialize logs
     if os.path.exists(config.log_dir) and config.resume:
-        resume=True
-        mode='a'
+        resume = True
+        mode = 'a'
     elif os.path.exists(config.log_dir) and config.eval_only:
-        resume=False
-        mode='a'
+        resume = False
+        mode = 'a'
     else:
-        resume=False
-        mode='w'
+        resume = False
+        mode = 'w'
 
     if not os.path.exists(config.log_dir):
         os.makedirs(config.log_dir)
@@ -156,12 +156,10 @@ def main():
     # at training time vs. test time), modify these two lines:
     train_transform = initialize_transform(
         transform_name=config.train_transform,
-        config=config,
-        dataset=full_dataset)
+        config=config)
     eval_transform = initialize_transform(
         transform_name=config.eval_transform,
-        config=config,
-        dataset=full_dataset)
+        config=config)
 
     train_grouper = CombinatorialGrouper(
         dataset=full_dataset,
@@ -228,7 +226,7 @@ def main():
         log_grouper = train_grouper
     log_group_data(datasets, log_grouper, logger)
 
-    ## Initialize algorithm
+    # Initialize algorithm
     algorithm = initialize_algorithm(
         config=config,
         datasets=datasets,
@@ -236,7 +234,7 @@ def main():
 
     model_prefix = get_model_prefix(datasets['train'], config)
     if not config.eval_only:
-        ## Load saved results if resuming
+        # Load saved results if resuming
         resume_success = False
         if resume:
             save_path = model_prefix + 'epoch:last_model.pth'
@@ -255,9 +253,9 @@ def main():
             except FileNotFoundError:
                 pass
 
-        if resume_success == False:
-            epoch_offset=0
-            best_val_metric=None
+        if not resume_success:
+            epoch_offset = 0
+            best_val_metric = None
 
         train(
             algorithm=algorithm,

@@ -3,6 +3,7 @@ from models.initializer import initialize_model
 from algorithms.single_model_algorithm import SingleModelAlgorithm
 from wilds.common.utils import split_into_groups
 
+
 class DeepCORAL(SingleModelAlgorithm):
     """
     Deep CORAL.

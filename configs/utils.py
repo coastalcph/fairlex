@@ -2,7 +2,7 @@ from configs.algorithm import algorithm_defaults
 from configs.model import model_defaults
 from configs.scheduler import scheduler_defaults
 from configs.data_loader import loader_defaults
-from configs.datasets import dataset_defaults, split_defaults
+from configs.datasets import dataset_defaults
 
 def populate_defaults(config):
     """Populates hyperparameters with defaults implied by choices
@@ -15,12 +15,6 @@ def populate_defaults(config):
         dataset_defaults[config.dataset]
     )
 
-    # implied defaults from choice of split
-    if config.dataset in split_defaults and config.split_scheme in split_defaults[config.dataset]:
-        config = populate_config(
-            config, 
-            split_defaults[config.dataset][config.split_scheme]
-        )
     
     # implied defaults from choice of algorithm
     config = populate_config(
