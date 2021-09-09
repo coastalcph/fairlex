@@ -1,9 +1,10 @@
-CONFIG_NAME='lex-longformer'
+CONFIG_NAME='mini-longformer'
+DATASET = 'ecthr'
 BATCH_SIZE = 32
 
-deepspeed --num_gpus=8 python models/pre-training/run_mlm.py \
+deepspeed --num_gpus=1 python ./data/models/run_mlm.py \
     --config_name ./data/models/${CONFIG_NAME} \
-    --train_file ./data/datasets/mlm_dump.txt \
+    --train_file ./data/datasets/${DATASET}_v1.0/text.raw \
     --max_seq_length 4096  \
     --do_train  \
     --do_eval  \
@@ -12,10 +13,10 @@ deepspeed --num_gpus=8 python models/pre-training/run_mlm.py \
     --save_strategy epoch  \
     --save_total_limit 5  \
     --num_train_epochs 20  \
-    --learning_rate 1e-4  \
+    --learning_rate 1e-5  \
     --per_device_train_batch_size ${BATCH_SIZE}  \
     --per_device_eval_batch_size ${BATCH_SIZE} \
     --adam_eps 1e-06 \
     --fp16 \
     --deepspeed ../../ds_config.json \
-    --output_dir ./data/models/${CONFIG_NAME}
+    --output_dir ./data/models/${DATASET}-${CONFIG_NAME}

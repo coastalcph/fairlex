@@ -4,6 +4,7 @@ from configs.scheduler import scheduler_defaults
 from configs.data_loader import loader_defaults
 from configs.datasets import dataset_defaults
 
+
 def populate_defaults(config):
     """Populates hyperparameters with defaults implied by choices
     of other hyperparameters."""

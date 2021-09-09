@@ -21,6 +21,6 @@ def get_dataset(dataset, version=None, **dataset_kwargs):
     if dataset == 'ecthr':
         from dataloaders.ecthr_dataset import ECtHRDataset
         return ECtHRDataset(version=version, **dataset_kwargs)
-    elif dataset == 'ledgar':
-        from dataloaders.ledgar_dataset import LEDGARDataset
-        return LEDGARDataset(version=version, **dataset_kwargs)
+    elif dataset == 'fscs':
+        from dataloaders.fscs_dataset import FSCSDataset
+        return FSCSDataset(version=version, **dataset_kwargs)

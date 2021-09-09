@@ -1,4 +1,3 @@
-import glob
 import os
 import json
 import torch
@@ -13,7 +12,8 @@ EAST_EUROPEAN_COUNTRIES = {'RUSSIA', 'TURKEY', 'UKRAINE', 'POLAND', 'BULGARIA', 
                            'CZECH REPUBLIC', 'GEORGIA', 'ESTONIA', 'BOSNIA & HERZEGOVINA', 'NORTH MACEDONIA',
                            'FORMER YUGOSLAV MACEDONIA', 'ARMENIA', 'LATVIA', 'MONTENEGRO'}
 
-ECHR_ARTICLES = {"2": "Right to life",
+ECHR_ARTICLES = {"0": "No Violation",
+                 "2": "Right to life",
                  "3": "Prohibition of torture",
                  "5": "Right to liberty and security",
                  "6": "Right to a fair trial",
@@ -22,7 +22,8 @@ ECHR_ARTICLES = {"2": "Right to life",
                  "10": "Freedom of expression",
                  "11": "Freedom of assembly and association",
                  "14": "Prohibition of discrimination",
-                 "P1-1": "Protection of property"
+                 "P1-1": "Protection of property",
+                 "1000": "Other"
                  }
 
 GENDERS = {'n/a': 0, 'male': 1, 'female': 2}
@@ -103,7 +104,7 @@ class ECtHRDataset(WILDSDataset):
             - results (dictionary): Dictionary of evaluation metrics
             - results_str (str): String summarizing the evaluation metrics
         """
-        metric = F1(prediction_fn=binary_logits_to_pred_v2, average='micro')
+        metric = F1(prediction_fn=binary_logits_to_pred_v2, average='macro')
         return self.standard_group_eval(
             metric,
             self._eval_grouper,
@@ -158,12 +159,18 @@ class ECtHRDataset(WILDSDataset):
                     example.pop('court_assessment_references', None)
                     example['labels'] = [1 if article in example['violated_articles'] else 0 for article in
                                          ECHR_ARTICLES]
+                    example['labels'][0] = 1 if len(example['violated_articles']) == 0 else 0
+                    example['labels'][-1] = 1 if len(example['violated_articles']) \
+                                                 and not sum(example['labels'][1:-1]) else 0
                     example['defendant'] = 0 if len(set(example['defendants']).
                                                     intersection(EAST_EUROPEAN_COUNTRIES)) else 1
                     example['gender'] = GENDERS[example['applicant_gender']]
-                    example['age'] = age_group(example['applicant_birth_year'], example['judgment_date'][:4])
-                    example['text'] = ' [SEP] '.join(example['facts'])
+                    example['age'] = age_group(example['applicant_birth_year'], int(example['judgment_date'][:4]))
+                    example['text'] = ' </s> '.join(example['facts'])
                     example['data_type'] = subset
+                    example.pop('facts', None)
+                    example.pop('applicants', None)
+                    example.pop('defendants', None)
                     data.append(example)
         df = pd.DataFrame(data)
         df = df.fillna("")

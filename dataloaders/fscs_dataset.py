@@ -7,33 +7,24 @@ from wilds.common.utils import map_to_id_array
 from wilds.common.metrics.all_metrics import F1, multiclass_logits_to_pred
 from wilds.common.grouper import CombinatorialGrouper
 
-INDUSTRIES = {'Manufacturing': 0,
-              'Finance, Insurance and Real Estate': 1,
-              'Services': 2,
-              'Transportation, Communications, Electric, Gas and Sanitary service': 3,
-              'Mining': 4,
-              'Retail Trade': 5,
-              'Wholesale Trade': 5,
-              'Construction': 6,
-              'Agriculture, Forestry and Fishing': 7}
+LEGAL_AREAS = {'penal law': 0, 'civil law': 1}
 
-CLAUSE_TYPES = {'governing laws': 0, 'waivers': 1, 'shares': 2, 'Fees and financial statements': 3, 'tax matters': 4,
-                'successors': 5, 'assignments': 6, 'counterparts': 7, 'representations': 8, 'payments': 9}
+LANGUAGES = {'de': 0, 'fr': 1, 'it': 2}
 
 
-class LEDGARDataset(WILDSDataset):
+class FSCSDataset(WILDSDataset):
     """
-    LEDGAR dataset.
-    This is a modified version of the 2021 ECtHR dataset.
+    FSCS dataset.
+    This is a modified version of the 2021 FSCS dataset.
 
     Supported `split_scheme`:
         'official': official split
 
     Input (x):
-        Review text of maximum token length of 2048.
+        Case facts of maximum token length of 4096.
 
     Label (y):
-        y is the article violations
+        y is 1 if appeal is approved, otherwise 0
 
     Metadata:
         industry_sector: defendant Group
@@ -41,7 +32,7 @@ class LEDGARDataset(WILDSDataset):
     Website:
         https://nijianmo.github.io/amazon/index.html
     """
-    _dataset_name = 'ledgar'
+    _dataset_name = 'fscs'
     _versions_dict = {
         '1.0': {
             'download_url': 'http://archive.org/download/ECtHR-NAACL2021/dataset.zip',
@@ -54,8 +45,8 @@ class LEDGARDataset(WILDSDataset):
         # the official split is the only split
         self._split_scheme = split_scheme
         self._y_type = 'long'
-        self._y_size = len(CLAUSE_TYPES)
-        self._n_classes = len(CLAUSE_TYPES)
+        self._y_size = len(2)
+        self._n_classes = len(2)
         # path
         self._data_dir = self.initialize_data_dir(root_dir, download)
         # Load data
@@ -110,12 +101,14 @@ class LEDGARDataset(WILDSDataset):
 
     def load_metadata(self, data_df):
         # Get metadata
-        columns = ['industry']
-        metadata_fields = ['industry']
+        columns = ['legal_area', 'language', 'canton']
+        metadata_fields = ['legal_area', 'language', 'canton']
         metadata_df = data_df[columns].copy()
         metadata_df.columns = metadata_fields
         ordered_maps = {}
-        ordered_maps['industry'] = range(0, 8)
+        ordered_maps['legal_area'] = range(0, 5)
+        ordered_maps['language'] = range(0, 3)
+        ordered_maps['canton'] = range(0, 4)
         metadata_map, metadata = map_to_id_array(metadata_df, ordered_maps)
         return metadata_fields, torch.from_numpy(metadata.astype('long')), metadata_map
 
@@ -129,13 +122,13 @@ class LEDGARDataset(WILDSDataset):
 
     def read_jsonl(self, data_dir):
         data = []
-        data_groups = {'2016': 'train', '2017': 'train', '2018': 'val', '2019': 'test'}
         with open(os.path.join(data_dir, f'ledgar.jsonl')) as fh:
             for line in fh:
                 example = json.loads(line)
-                example['labels'] = CLAUSE_TYPES[example['clause_type']]
-                example['industry'] = INDUSTRIES[example['filer_industry']]
-                example['data_type'] = data_groups[example['year']]
+                example['label'] = 1 if example['decision'] == 'approval' else 0
+                example['language'] = LANGUAGES[example['language']]
+                example['legal_area'] = LEGAL_AREAS[example['legal_area']]
+                example['data_type'] = example['data_type']
                 data.append(example)
         df = pd.DataFrame(data)
         df = df.fillna("")
