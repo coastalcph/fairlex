@@ -58,7 +58,8 @@ class ECtHRDataset(WILDSDataset):
         },
     }
 
-    def __init__(self, version=None, root_dir='data', download=False, split_scheme='official'):
+    def __init__(self, version=None, root_dir='data', download=False,
+                 split_scheme='official', group_by_fields='defendant'):
         self._version = version
         # the official split is the only split
         self._split_scheme = split_scheme
@@ -84,6 +85,7 @@ class ECtHRDataset(WILDSDataset):
             self.data_df.loc[split_indices, 'data_type'] = self.split_dict[split]
         self._split_array = self.data_df['data_type'].values
         # eval
+        self.group_by_fields = group_by_fields
         self.initialize_eval_grouper()
         super().__init__(root_dir, download, split_scheme)
 
@@ -134,7 +136,7 @@ class ECtHRDataset(WILDSDataset):
         if self.split_scheme == 'official':
             self._eval_grouper = CombinatorialGrouper(
                 dataset=self,
-                groupby_fields=['defendant'])
+                groupby_fields=self.group_by_fields)
         else:
             raise ValueError(f'Split scheme {self.split_scheme} not recognized')
 

@@ -52,7 +52,7 @@ process_outputs_functions = {
 # see initialize_*() functions for correspondence
 transforms = ['bert']
 models = ['mini-longformer', 'mini-xlm-longformer']
-algorithms = ['ERM', 'groupDRO', 'deepCORAL', 'IRM', 'adversarialRemoval', 'minMax', 'ReX']
+algorithms = ['ERM', 'groupDRO', 'deepCORAL', 'IRM', 'adversarialRemoval', 'minMax', 'REx']
 optimizers = ['SGD', 'Adam', 'AdamW']
 schedulers = ['linear_schedule_with_warmup', 'ReduceLROnPlateau', 'StepLR']
 

@@ -146,6 +146,7 @@ def main():
         root_dir=config.root_dir,
         download=config.download,
         split_scheme=config.split_scheme,
+        group_by_fields=config.groupby_fields,
         **config.dataset_kwargs)
 
     # Model
