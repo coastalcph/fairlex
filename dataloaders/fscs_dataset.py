@@ -1,15 +1,17 @@
 import os
 import json
 import torch
+import re
 import pandas as pd
+from nltk import sent_tokenize
 from wilds.datasets.wilds_dataset import WILDSDataset
 from wilds.common.utils import map_to_id_array
 from wilds.common.metrics.all_metrics import F1, multiclass_logits_to_pred
 from wilds.common.grouper import CombinatorialGrouper
 
-LEGAL_AREAS = {'penal law': 0, 'civil law': 1}
-
+LEGAL_AREAS = {'public law': 0, 'penal law': 1, 'civil law': 2, 'social law': 3, 'insurance law': 4, 'other': 5}
 LANGUAGES = {'de': 0, 'fr': 1, 'it': 2}
+ISO2LANGUAGE = {'de': 'german', 'fr': 'french', 'it': 'italian'}
 
 
 class FSCSDataset(WILDSDataset):
@@ -40,7 +42,8 @@ class FSCSDataset(WILDSDataset):
         },
     }
 
-    def __init__(self, version=None, root_dir='data', download=False, split_scheme='official'):
+    def __init__(self, version=None, root_dir='data', download=False,
+                 split_scheme='official', group_by_fields='legal area'):
         self._version = version
         # the official split is the only split
         self._split_scheme = split_scheme
@@ -66,6 +69,7 @@ class FSCSDataset(WILDSDataset):
             self.data_df.loc[split_indices, 'data_type'] = self.split_dict[split]
         self._split_array = self.data_df['data_type'].values
         # eval
+        self.group_by_fields = group_by_fields
         self.initialize_eval_grouper()
         super().__init__(root_dir, download, split_scheme)
 
@@ -101,14 +105,13 @@ class FSCSDataset(WILDSDataset):
 
     def load_metadata(self, data_df):
         # Get metadata
-        columns = ['legal_area', 'language', 'canton']
-        metadata_fields = ['legal_area', 'language', 'canton']
+        columns = ['legal_area', 'language']
+        metadata_fields = ['legal_area', 'language']
         metadata_df = data_df[columns].copy()
         metadata_df.columns = metadata_fields
         ordered_maps = {}
         ordered_maps['legal_area'] = range(0, 5)
         ordered_maps['language'] = range(0, 3)
-        ordered_maps['canton'] = range(0, 4)
         metadata_map, metadata = map_to_id_array(metadata_df, ordered_maps)
         return metadata_fields, torch.from_numpy(metadata.astype('long')), metadata_map
 
@@ -122,14 +125,22 @@ class FSCSDataset(WILDSDataset):
 
     def read_jsonl(self, data_dir):
         data = []
-        with open(os.path.join(data_dir, f'ledgar.jsonl')) as fh:
-            for line in fh:
-                example = json.loads(line)
-                example['label'] = 1 if example['decision'] == 'approval' else 0
-                example['language'] = LANGUAGES[example['language']]
-                example['legal_area'] = LEGAL_AREAS[example['legal_area']]
-                example['data_type'] = example['data_type']
-                data.append(example)
+        for split in ['train', 'val', 'test']:
+            with open(os.path.join(data_dir, f'{split}.jsonl')) as fh:
+                for line in fh:
+                    example = json.loads(line)
+                    sentences = []
+                    for sent in sent_tokenize(example['text'], language=ISO2LANGUAGE[example['language']]):
+                        if (len(sent) <= 50 or re.match('[0-9]', sent)) and len(sentences):
+                            sentences[-1] += ' ' + sent
+                        else:
+                            sentences.append(sent)
+                    example['text'] = ' </s> '.join(sentences)
+                    example['label'] = [0, 1] if example['decision'] == 'approval' else [1, 0]
+                    example['language'] = LANGUAGES[example['language']]
+                    example['legal_area'] = LEGAL_AREAS[example['legal area']]
+                    example['data_type'] = split
+                    data.append(example)
         df = pd.DataFrame(data)
         df = df.fillna("")
         return df

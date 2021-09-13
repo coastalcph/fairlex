@@ -17,11 +17,11 @@ def main():
     parser = argparse.ArgumentParser()
 
     # Required arguments
-    parser.add_argument('--model', default='mini-roberta')
+    parser.add_argument('--model', default='eu-mini-xlm-roberta')
     parser.add_argument('--transformation', default='longformer', choices=['longformer', 'longbert'])
-    parser.add_argument('--output_model_name', default='mini-longformer')
+    parser.add_argument('--output_model_name', default='mini-xlm-longformer')
     # Model arguments
-    parser.add_argument('--max_pos', default=4096, type=parse_int)
+    parser.add_argument('--max_pos', default=2048, type=parse_int)
     parser.add_argument('--attention_window', default=64, type=parse_int)
 
     args = parser.parse_args()
@@ -72,7 +72,8 @@ def main():
         lfm.save_pretrained(args.output_model_name)
 
         # save tokenizer files
-        for filename in ['tokenizer.json', 'merges.txt', 'vocab.json', 'sentencepiece.bpe.model']:
+        for filename in ['tokenizer.json', 'merges.txt', 'vocab.json', 'sentencepiece.bpe.model',
+                         'tokenizer_config.json', 'special_tokens_map.json']:
             if os.path.exists(f'{args.model}/{filename}'):
                 shutil.copy(f'{args.model}/{filename}', f'{args.output_model_name}/{filename}')
 
@@ -86,7 +87,7 @@ def main():
     else:
         # save model and tokenizer
         model.save_pretrained(args.output_model_name)
-        for filename in ['tokenizer.json', 'merges.txt', 'vocab.json']:
+        for filename in ['tokenizer.json', 'merges.txt', 'vocab.json', 'tokenizer_config.json', 'special_tokens_map.json']:
             shutil.copy(f'{args.model}/{filename}', f'{args.output_model_name}/{filename}')
 
 
