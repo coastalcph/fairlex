@@ -38,5 +38,12 @@ algorithm_defaults = {
         'uniform_over_groups': True,
         'distinct_groups': True,
         'eval_loader': 'standard',
+    },
+    'REx': {
+        'train_loader': 'group',
+        'uniform_over_groups': True,
+        'distinct_groups': True,
+        'eval_loader': 'standard',
+        'rex_beta': 0.5,
     }
 }
