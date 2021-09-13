@@ -5,14 +5,14 @@
 #SBATCH -p gpu --gres=gpu:titanrtx:1
 #Note that a program will be killed once it exceeds this time!
 #SBATCH --time=24:00:00
-#SBATCH -o logs/scotus_issue_area_%A-%a.log
+#SBATCH -o logs/scotus_v03/scotus_issue_area_%A-%a.log
 #SBATCH --array=1-3
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate fairlex 
 
 RAND_NUM=123
 PARAM=""
-ATTRIBUTE=issueArea
+ATTRIBUTE=decisionDirection
 if [[ $SLURM_ARRAY_TASK_ID == 1 ]];
 then
     ALGO=groupDRO
@@ -24,7 +24,7 @@ fi
 if [[ $SLURM_ARRAY_TASK_ID == 3 ]];
 then
     ALGO=deepCORAL
-    PARAM="--groupby_fields issueArea"
+    PARAM="--groupby_fields decisionDirection"
 fi
 nvidia-smi
 python3 -c "import torch; print('cuda is available = ',torch.cuda.is_available())"
@@ -33,7 +33,7 @@ echo 'RAND_NUM='$RAND_NUM
 echo 'ALGO='$ALGO
 
 COMMAND="run_expt.py --dataset scotus --algorithm $ALGO $PARAM --root_dir data \
---log_dir logs/scotus/issue_area/$ALGO/official --split_scheme official \
+--log_dir logs/scotus_v03/decision_direction/$ALGO/official --split_scheme official \
 --dataset_kwargs protected_attribute=$ATTRIBUTE \
 --save_best --seed $RAND_NUM"
 echo ''
@@ -42,7 +42,7 @@ echo $COMMAND
 PYTHONPATH=src python $COMMAND
 
 COMMAND="run_expt.py --dataset scotus --algorithm $ALGO $PARAM --root_dir data \
---log_dir logs/scotus/issue_area/$ALGO/temporal --split_scheme temporal \
+--log_dir logs/scotus_v03/decision_direction/$ALGO/temporal --split_scheme temporal \
 --dataset_kwargs protected_attribute=$ATTRIBUTE \
 --save_best --seed $RAND_NUM"
 echo ''
@@ -51,7 +51,7 @@ echo $COMMAND
 PYTHONPATH=src python $COMMAND
 
 COMMAND="run_expt.py --dataset scotus --algorithm $ALGO $PARAM --root_dir data \
---log_dir logs/scotus/issue_area/$ALGO/uniform --split_scheme uniform \
+--log_dir logs/scotus_v03/decision_direction/$ALGO/uniform --split_scheme uniform \
 --dataset_kwargs protected_attribute=$ATTRIBUTE \
 --save_best --seed $RAND_NUM"
 echo ''

@@ -53,8 +53,8 @@ dataset_defaults = {
         'train_transform': 'bert',#'longformer',
         'eval_transform': 'bert', #'longformer',
         'max_token_length': 4096,
-        'loss_function': 'binary_cross_entropy',
-        'algo_log_metric': 'multi-label-f1',
+        'loss_function': 'cross_entropy',
+        'algo_log_metric': 'multi-class-f1',
         'batch_size': 8,
         'lr': 1e-5,
         'weight_decay': 0.01,
@@ -67,7 +67,8 @@ dataset_defaults = {
             'pin_memory': True,
         },
         'val_metric': 'F1-micro_all',
-        'val_metric_decreasing': False
+        'val_metric_decreasing': False,
+        'process_outputs_function': 'multiclass_logits_to_pred'
     },
     'amazon': {
         'split_scheme': 'official',

@@ -436,20 +436,59 @@ def get_info_logger(name):
 
 def read_jsonl(path, data_type, attributes_to_retain=None):
     examples = list()
+    skipped_examples_due_to_nan_attribute = 0
     with jsonlines.open(path) as lines:
         for line_data in lines:
             example = dict(line_data)
-            # if str(example['labels']) == 'nan':
-            #     continue
             attributes = example['attributes']
             if attributes_to_retain is not None:
                 attributes = {k:v for k, v in example['attributes'].items() if k in attributes_to_retain}
             if 'dateDecision' in attributes:
                 attributes['dateDecision'] = datetime.strptime(attributes['dateDecision'], '%m/%d/%Y') 
             if any(str(v) == 'nan' for v in attributes.values()):
+                skipped_examples_due_to_nan_attribute+=1
                 continue
             example['data_type'] = data_type
+            # example['text'] = remove_labels_from_text(example['text'])
             del example['attributes']
+
             example.update(attributes)
             examples.append(example)
+            # if len(examples) == 8:
+                # break
+    print(f'WARN: skipped {skipped_examples_due_to_nan_attribute} examples in {data_type} due to nan values.')
     return examples
+
+def remove_labels_from_text(text):
+    try:
+        idx = text.lower().index("delivered the opinion")
+        text = text[:idx]
+        text = text[:text.rindex('\n')]
+        ### This also removes all judge opinions and basically leaves in the text only
+        ### a summary of the case
+    except:
+        try:
+            idx = text.index('PER CURIAM')
+            text = text[:idx]
+        except:
+            try:
+                idx = text.lower().index('mr. justice')
+                text = text[:idx]
+                text = text[:text.rindex('\n')]
+                text = text[:text.rindex('\n')]
+            except:
+                try:
+                    idx = text.lower().index('it is so ordered')
+                    text = text[:idx]
+                    text = text[:text.rindex('\n')]
+                    text = text[:text.rindex('\n')]
+                except:
+                    pass
+                
+    return text
+
+if __name__ == '__main__':
+    path = "/home/npf290/dev/fairlex-wilds/data/scotus_v0.2/scotus.train.jsonl"
+    data_type='train'
+
+    read_jsonl(path, data_type, ['decisionDirection', 'issueArea'])

@@ -1,3 +1,5 @@
+from dataloaders.scotus_attribute_mapping import ISSUE_AREA_MAPPING, KEYWORD_2_PETITIONER_NAME, PARTY_WINNING_MAPPING, PETITIONER_MAPPING, RESPONDENT_MAPPING, STATE_2_REGION_MAP
+from configs.supported import binary_logits_to_pred_v2
 from typing import Counter
 from wilds.datasets.wilds_dataset import WILDSDataset
 from wilds.datasets.amazon_dataset import AmazonDataset
@@ -5,25 +7,20 @@ import os
 import jsonlines
 import pandas as pd
 import torch
+import re
 from wilds.common.metrics.all_metrics import F1
 from utils import get_info_logger, read_jsonl
 from wilds.common.grouper import CombinatorialGrouper
 from torch.nn.utils.rnn import pad_sequence
 from random import shuffle
 
-PARTY_WINNING_MAPPING = {
-    "no favorable disposition for petitioning party apparent": 0,
-    "petitioning party received a favorable disposition": 1,
-}
-# 'favorable disposition for petitioning party unclear': 2}
-LABEL_MAPPING = PARTY_WINNING_MAPPING
 
 
 class ScotusDataset(WILDSDataset):
     _versions_dict = {
-        "0.2": {
-            "download_url": "https://sid.erda.dk/share_redirect/BMjadGoU9Y",
-            "compressed_size": 314_216,
+        "0.3": {
+            "download_url": "https://sid.erda.dk/share_redirect/AovxUjuJco",
+            "compressed_size": 407_960,
         },
     }
 
@@ -31,6 +28,7 @@ class ScotusDataset(WILDSDataset):
         self,
         split_scheme,
         protected_attribute,
+        protected_attribute_val=None,
         root_dir="data/",
         version=None,
         download=False,
@@ -38,27 +36,31 @@ class ScotusDataset(WILDSDataset):
     ):
         self._dataset_name = "scotus"
         self._version = version
+        # self.prediction_fn = binary_logits_to_pred_v2
         words = protected_attribute.split("_")
         for i in range(1, len(words)):
             words[i] = words[i][0].upper() + words[i][1:]
-        self.label2idx = PARTY_WINNING_MAPPING
+        self.label2idx = ISSUE_AREA_MAPPING
         protected_attribute = "".join(words)
         self.protected_attribute = protected_attribute
+        self.protected_attribute_val = protected_attribute_val.replace('_', ' ') if protected_attribute_val is not None else None
+        self.make_protected_group_binary = protected_attribute_val is not None
 
         self.logger = get_info_logger(__name__)
         self.min_threshold = kwargs.get("min_example_threshold", 500)
-        self.attributes_to_retain = ["issueArea", "decisionDirection", "dateDecision"]
+        self.attributes_to_retain = list(set(["dateDecision", self.protected_attribute]))
         self._split_scheme = split_scheme
         self._data_dir = self.initialize_data_dir(root_dir, download=download)
         self.logger.info("reading data")
         self._metadata_df, self.attribute2value2idx = self.read_data()
 
-        print(self._metadata_df.head())
+        # print(self._metadata_df.head())
 
         # Get the y values
+        self._y_type = 'long'
         self._y_array = torch.LongTensor(self._metadata_df["label_id"])
-        self._y_size = 1
-        self._n_classes = 1 #len(self.label2idx)
+        self._y_size = len(self.label2idx)
+        self._n_classes = None
 
         # Extract text
         self._text_array = list(self._metadata_df["text"])
@@ -91,17 +93,9 @@ class ScotusDataset(WILDSDataset):
         super().__init__(root_dir, download, split_scheme)
 
     def initialize_eval_grouper(self):
-
-        if self.protected_attribute == "issueArea":
-            self._eval_grouper = CombinatorialGrouper(
-                dataset=self, groupby_fields=["issueArea"]
+        self._eval_grouper = CombinatorialGrouper(
+                dataset=self, groupby_fields=[self.protected_attribute]
             )
-        elif self.protected_attribute == "decisionDirection":
-            self._eval_grouper = CombinatorialGrouper(
-                dataset=self, groupby_fields=["decisionDirection"]
-            )
-        else:
-            raise ValueError(f"Split scheme {self.split_scheme} not recognized")
 
     def read_data(self):
 
@@ -121,24 +115,34 @@ class ScotusDataset(WILDSDataset):
             attributes_to_retain=self.attributes_to_retain,
         )
 
-        # discard examples tagged with 'favorable disposition for petitioning party unclear' (just 2 examples)
+        # discard examples tagged with 'favorable disposition for petitioning party unclear'
         data = [x for x in train_data + dev_data + test_data if x["label_id"] != 2]
 
         # all_labels = sorted({example["label"] for example in data})
         # label2idx = dict(reversed(x) for x in enumerate(all_labels))
         attribute2value2idx = dict()
+        if self.protected_attribute == 'respondent':
+            data = self.map_respondent(data)
         for example in data:
             for a in self.attributes_to_retain:
                 v = example[a]
+                if self.make_protected_group_binary and a == self.protected_attribute:
+                    
+                    if v != self.protected_attribute_val:
+                        v = "Not " + self.protected_attribute_val
+                        example[a] = v
                 a_vals = attribute2value2idx.get(a, set())
                 a_vals.add(v)
                 attribute2value2idx[a] = a_vals
+
         for a in self.attributes_to_retain:
             a_vals = sorted(attribute2value2idx[a])
             v2i = dict(reversed(x) for x in enumerate(a_vals))
             del attribute2value2idx[a]
             attribute2value2idx[a] = v2i
         self.protected_attribute_id2str = dict()
+
+
         for example in data:
             # example["encoded_labels"] = example["label_id"]
             for a in self.attributes_to_retain:
@@ -158,6 +162,38 @@ class ScotusDataset(WILDSDataset):
         # df = df.fillna("")
         return df, attribute2value2idx
 
+    def map_respondent(self, data):
+        for example in data:
+            pa_val = example[self.protected_attribute].lower()
+            new_val = RESPONDENT_MAPPING[pa_val]
+            example[self.protected_attribute] = new_val
+        return data
+        
+    def map_petitioners(self, data):
+        for example in data:
+            pa_val = example[self.protected_attribute].lower()
+            for keyword_regex in KEYWORD_2_PETITIONER_NAME.keys():
+                if re.match(keyword_regex, pa_val) is not None:
+                    example[self.protected_attribute] = KEYWORD_2_PETITIONER_NAME[keyword_regex]
+            
+    def coarsen_case_origin(self, data):
+        found_count = 0
+        notfound_count = 0
+        for example in data:
+            pa_val = example[self.protected_attribute].lower()
+            found = False
+            for state in STATE_2_REGION_MAP.keys():
+                if state in pa_val:
+                    region = STATE_2_REGION_MAP[state]
+                    example[self.protected_attribute] = region
+                    found = True
+                    found_count += 1
+
+            if not found:
+                notfound_count += 1
+        print()
+                
+
     def __create_temporal_split(self, data, train_size, dev_size):
         data = sorted(data, key=lambda ex: ex["dateDecision"])
         for i, ex in enumerate(data):
@@ -169,19 +205,6 @@ class ScotusDataset(WILDSDataset):
                 ex["data_type"] = "test"
 
         return pd.DataFrame(data)
-
-    # def __balance_groups(self, groups):
-    #     balanced_groups = dict()
-    #     for k, data in groups.items():
-    #         shuffle(data)
-    #         # data_0 = [ex for ex in data if ex['label_id'] == 0]
-    #         # data_1 = [ex for ex in data if ex['label_id'] == 1]
-    #         # min_len = min(len(data_0), len(data_1))
-    #         # data_0 = data_0[:min_len]
-    #         # data_1 = data_1[:min_len]
-    #         # balanced_groups[k] = (data_0, data_1)
-    #         balanced_groups[k] =
-    #     return balanced_groups
 
     def __create_uniform_split(self, data):
         data = [ex for ex in data if ex["label_id"] in {0, 1}]
@@ -243,11 +266,51 @@ class ScotusDataset(WILDSDataset):
         return self._text_array[idx]
 
     def eval(self, y_pred, y_true, metadata):
-        metric = F1(average="macro")
+        metric = F1(average='micro')
         eval_grouper = self._eval_grouper
 
         return self.standard_group_eval(metric, eval_grouper, y_pred, y_true, metadata)
 
-
+    def get_stats(self):
+        train_label_distr = Counter(self._metadata_df['label_id'][self._metadata_df['data_type']==0])
+        dev_label_distr = Counter(self._metadata_df['label_id'][self._metadata_df['data_type']==1])
+        test_label_distr = Counter(self._metadata_df['label_id'][self._metadata_df['data_type']==2])
+        train_group_distr = Counter(self._metadata_df[self.protected_attribute][self._metadata_df['data_type']==0])
+        dev_group_distr = Counter(self._metadata_df[self.protected_attribute][self._metadata_df['data_type']==1])
+        test_group_distr = Counter(self._metadata_df[self.protected_attribute][self._metadata_df['data_type']==2])
+        print(f'Train label distr: {train_label_distr.most_common(len(train_label_distr))}')
+        print(f'Dev label distr: {dev_label_distr.most_common(len(dev_label_distr))}')
+        print(f'Test label distr: {test_label_distr.most_common(len(test_label_distr))}')
+        
+        print(f'Train group distr: {train_group_distr.most_common(len(train_group_distr))}')
+        print(f'Dev group distr: {dev_group_distr.most_common(len(dev_group_distr))}')
+        print(f'Test group distr: {test_group_distr.most_common(len(test_group_distr))}')
+        
+        
 if __name__ == "__main__":
-    ScotusDataset("uniform", "issueArea")
+    dataset = ScotusDataset("temporal", "decisionDirection", download=True)
+    print()
+    # dataset.get_stats()
+    exit(1)
+
+    print('Uniform - decisionDirection')
+    dataset =ScotusDataset("uniform", "decisionDirection")
+    dataset.get_stats()
+    print('Temporal - decisionDirection')
+    dataset =ScotusDataset("temporal", "decisionDirection")
+    dataset.get_stats()
+    print('Offficial - decisionDirection')
+    dataset = ScotusDataset("official", "decisionDirection")
+    dataset.get_stats()
+    print('='*100)
+
+    print('Uniform - issueArea')
+    dataset =ScotusDataset("uniform", "issueArea")
+    dataset.get_stats()
+    print('Temporal - issueArea')
+    dataset =ScotusDataset("temporal", "issueArea")
+    dataset.get_stats()
+    print('Official - issueArea')
+    dataset =ScotusDataset("official", "issueArea")
+    dataset.get_stats()
+    

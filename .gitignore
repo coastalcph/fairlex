@@ -140,3 +140,6 @@ data/datasets data/download data/__init__.py data/models data/__pycache__ data/s
 logs2/
 .vscode/
 data/scotus_v0.2/
+data
+.gitignore
+.vscode/

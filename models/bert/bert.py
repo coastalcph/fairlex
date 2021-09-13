@@ -14,6 +14,7 @@ class BertClassifier(BertForSequenceClassification):
             input_ids=input_ids,
             attention_mask=attention_mask
         )[0]
+        outputs = outputs.squeeze(-1)
         return outputs
 
 
@@ -32,6 +33,7 @@ class LongformerClassifier(LongformerForSequenceClassification):
             attention_mask=attention_mask,
             global_attention_mask=global_attention_mask
         )[0]
+        outputs = outputs.squeeze(-1)
         return outputs
 
 

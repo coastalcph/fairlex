@@ -18,8 +18,11 @@
             "request": "launch",
             "program": "run_expt.py",
             "args": ["--dataset", "scotus", "--algorithm", "deepCORAL", "--root_dir", "data",
-                "--log_dir", "logs2/scotus/decision_direction/deepCORAL", "--save_best", "--seed", "123", "--split_scheme", "uniform", 
-            "--dataset_kwargs", "protected_attribute=decisionDirection", "--groupby_fields", "decisionDirection"],
+                    "--log_dir", "logs2/scotus/respondent/groupDRO", "--save_best", 
+                    "--seed", "123", "--split_scheme", "temporal", 
+                    "--dataset_kwargs", "protected_attribute=respondent", 
+                    "--groupby_fields", "respondent",
+                    "--progress_bar"],
             "console": "integratedTerminal",
             "justMyCode": false
         }

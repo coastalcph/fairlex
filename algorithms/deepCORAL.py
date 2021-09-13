@@ -78,7 +78,7 @@ class DeepCORAL(SingleModelAlgorithm):
         g = self.grouper.metadata_to_group(metadata).to(self.device)
         with torch.cuda.amp.autocast(enabled=self.use_scaler):
             features = self.featurizer(x)
-            outputs = self.classifier(features)
+            outputs = self.classifier(features).squeeze(-1)
 
         # package the results
         results = {

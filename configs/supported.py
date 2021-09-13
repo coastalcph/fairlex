@@ -58,6 +58,7 @@ algo_log_metrics = {
 process_outputs_functions = {
     'binary_logits_to_pred': binary_logits_to_pred,
     'multiclass_logits_to_pred': multiclass_logits_to_pred,
+    'binary_logits_to_pred_v2': binary_logits_to_pred_v2,
     None: None,
 }
 

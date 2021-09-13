@@ -2,6 +2,7 @@ import os
 import argparse
 import torch
 from collections import defaultdict
+from tqdm.std import tqdm
 
 from wilds.common.data_loaders import get_train_loader, get_eval_loader
 from wilds.common.grouper import CombinatorialGrouper
@@ -258,6 +259,12 @@ def main():
         if resume_success == False:
             epoch_offset=0
             best_val_metric=None
+
+        # iterator = tqdm(datasets['dev']['loader']) if config.progress_bar else datasets['train']['loader']
+        # c = 0
+        # batch = None
+        # for b in iterator:
+        #     batch = b
 
         train(
             algorithm=algorithm,
