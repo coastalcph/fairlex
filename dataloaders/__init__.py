@@ -27,5 +27,9 @@ def get_dataset(dataset, version=None, **dataset_kwargs):
     elif 'scotus' in dataset:
         from dataloaders.scotus_dataset import ScotusDataset
         return ScotusDataset(version=version, **dataset_kwargs)
+    elif dataset == 'fscs':
+        from dataloaders.fscs_dataset import FSCSDataset
+        return FSCSDataset(version=version, **dataset_kwargs)
     else: 
         return wilds_get_dataset(dataset, version, **dataset_kwargs)
+    

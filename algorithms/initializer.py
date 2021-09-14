@@ -5,7 +5,9 @@ from algorithms.deepCORAL import DeepCORAL
 from algorithms.IRM import IRM
 from algorithms.adversarialRemoval import AdversarialRemoval
 from algorithms.minMax import MinMax
+from algorithms.REx import REx
 from configs.supported import algo_log_metrics, losses
+
 
 def initialize_algorithm(config, datasets, train_grouper):
     train_dataset = datasets['train']['dataset']
@@ -35,7 +37,7 @@ def initialize_algorithm(config, datasets, train_grouper):
     loss = losses[config.loss_function]
     metric = algo_log_metrics[config.algo_log_metric]
 
-    if config.algorithm=='ERM':
+    if config.algorithm == 'ERM':
         algorithm = ERM(
             config=config,
             d_out=d_out,
@@ -54,7 +56,7 @@ def initialize_algorithm(config, datasets, train_grouper):
             metric=metric,
             n_train_steps=n_train_steps,
             is_group_in_train=is_group_in_train)
-    elif config.algorithm=='deepCORAL':
+    elif config.algorithm == 'deepCORAL':
         algorithm = DeepCORAL(
             config=config,
             d_out=d_out,
@@ -62,7 +64,7 @@ def initialize_algorithm(config, datasets, train_grouper):
             loss=loss,
             metric=metric,
             n_train_steps=n_train_steps)
-    elif config.algorithm=='IRM':
+    elif config.algorithm == 'IRM':
         algorithm = IRM(
             config=config,
             d_out=d_out,
@@ -80,6 +82,14 @@ def initialize_algorithm(config, datasets, train_grouper):
             n_train_steps=n_train_steps)
     elif config.algorithm == 'minMax':
         algorithm = MinMax(
+            config=config,
+            d_out=d_out,
+            grouper=train_grouper,
+            loss=loss,
+            metric=metric,
+            n_train_steps=n_train_steps)
+    elif config.algorithm == 'REx':
+        algorithm = REx(
             config=config,
             d_out=d_out,
             grouper=train_grouper,

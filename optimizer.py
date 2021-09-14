@@ -1,6 +1,7 @@
 from torch.optim import SGD, Adam
 from transformers import AdamW
 
+
 def initialize_optimizer(config, model):
     # initialize optimizers
     if config.optimizer=='SGD':

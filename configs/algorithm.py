@@ -45,5 +45,5 @@ algorithm_defaults = {
         'distinct_groups': True,
         'eval_loader': 'standard',
         'rex_beta': 0.5,
-    }
+    },
 }

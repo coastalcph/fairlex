@@ -4,12 +4,4 @@ scheduler_defaults = {
             'num_warmup_steps': 0,
         },
     },
-    'ReduceLROnPlateau': {
-        'scheduler_kwargs':{},
-    },
-    'StepLR': {
-        'scheduler_kwargs':{
-            'step_size': 1,
-        }
-    },
 }

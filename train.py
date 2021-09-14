@@ -55,7 +55,7 @@ def run_epoch(algorithm, dataset, general_logger, epoch, config, train):
         epoch_y_true,
         epoch_metadata)
 
-    if config.scheduler_metric_split==dataset['split']:
+    if config.scheduler_metric_split == dataset['split']:
         algorithm.step_schedulers(
             is_epoch=True,
             metrics=results,
