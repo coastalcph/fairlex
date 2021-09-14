@@ -6,7 +6,7 @@ import wilds
 import sklearn
 from wilds.common.utils import minimum
 from wilds.common.metrics.loss import ElementwiseLoss, MultiTaskLoss
-from wilds.common.metrics.all_metrics import Accuracy, MultiTaskAccuracy, MSE, multiclass_logits_to_pred, binary_logits_to_pred, Metric
+from wilds.common.metrics.all_metrics import Accuracy, MultiTaskAccuracy, MSE, multiclass_logits_to_pred, binary_logits_to_pred, Metric, multiclass_logits_to_pred_v2
 
 
 def binary_logits_to_pred_v2(logits):
@@ -46,18 +46,19 @@ losses = {
 }
 
 algo_log_metrics = {
-    'accuracy': Accuracy(prediction_fn=multiclass_logits_to_pred),
+    'accuracy': Accuracy(prediction_fn=multiclass_logits_to_pred_v2),
     'mse': MSE(),
-    'multitask_accuracy': MultiTaskAccuracy(prediction_fn=multiclass_logits_to_pred),
+    'multitask_accuracy': MultiTaskAccuracy(prediction_fn=multiclass_logits_to_pred_v2),
     'multitask_binary_accuracy': MultiTaskAccuracy(prediction_fn=binary_logits_to_pred),
     'multi-label-f1': F1(average='micro', prediction_fn=binary_logits_to_pred_v2),
-    'multi-class-f1': F1(average='micro', prediction_fn=multiclass_logits_to_pred),
+    'multi-class-f1': F1(average='micro', prediction_fn=multiclass_logits_to_pred_v2),
     None: None,
 }
 
 process_outputs_functions = {
     'binary_logits_to_pred': binary_logits_to_pred,
     'multiclass_logits_to_pred': multiclass_logits_to_pred,
+    'multiclass_logits_to_pred_v2': multiclass_logits_to_pred_v2,
     'binary_logits_to_pred_v2': binary_logits_to_pred_v2,
     None: None,
 }

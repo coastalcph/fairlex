@@ -437,10 +437,14 @@ def get_info_logger(name):
 def read_jsonl(path, data_type, attributes_to_retain=None):
     examples = list()
     skipped_examples_due_to_nan_attribute = 0
+    seen = set()
     with jsonlines.open(path) as lines:
         for line_data in lines:
             example = dict(line_data)
             attributes = example['attributes']
+            case_id = attributes['caseId']
+            if case_id in seen:
+                continue
             if attributes_to_retain is not None:
                 attributes = {k:v for k, v in example['attributes'].items() if k in attributes_to_retain}
             if 'dateDecision' in attributes:
@@ -454,6 +458,7 @@ def read_jsonl(path, data_type, attributes_to_retain=None):
 
             example.update(attributes)
             examples.append(example)
+            seen.add(case_id)
             # if len(examples) == 8:
                 # break
     print(f'WARN: skipped {skipped_examples_due_to_nan_attribute} examples in {data_type} due to nan values.')

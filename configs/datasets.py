@@ -68,7 +68,7 @@ dataset_defaults = {
         },
         'val_metric': 'F1-micro_all',
         'val_metric_decreasing': False,
-        'process_outputs_function': 'multiclass_logits_to_pred'
+        'process_outputs_function': 'multiclass_logits_to_pred_v2'
     },
     'amazon': {
         'split_scheme': 'official',

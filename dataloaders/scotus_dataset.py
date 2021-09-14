@@ -13,14 +13,15 @@ from utils import get_info_logger, read_jsonl
 from wilds.common.grouper import CombinatorialGrouper
 from torch.nn.utils.rnn import pad_sequence
 from random import shuffle
+from tqdm import tqdm
 
 
 
 class ScotusDataset(WILDSDataset):
     _versions_dict = {
-        "0.3": {
-            "download_url": "https://sid.erda.dk/share_redirect/AovxUjuJco",
-            "compressed_size": 407_960,
+        "0.4": {
+            "download_url": "https://sid.erda.dk/share_redirect/DAaEgzmRb0",
+            "compressed_size": 136_72,
         },
     }
 
@@ -124,6 +125,8 @@ class ScotusDataset(WILDSDataset):
         if self.protected_attribute == 'respondent':
             data = self.map_respondent(data)
         for example in data:
+            if example['text'].startswith('United States Supreme Court'):
+                example['text'] = example['text'][len("United States Supreme Court"):]
             for a in self.attributes_to_retain:
                 v = example[a]
                 if self.make_protected_group_binary and a == self.protected_attribute:
@@ -286,10 +289,21 @@ class ScotusDataset(WILDSDataset):
         print(f'Dev group distr: {dev_group_distr.most_common(len(dev_group_distr))}')
         print(f'Test group distr: {test_group_distr.most_common(len(test_group_distr))}')
         
-        
+def dump_dataset(scotus_dataset:WILDSDataset, outfile):
+    training_set = scotus_dataset.get_subset('train')
+    dev_set = scotus_dataset.get_subset('val')
+    bar = tqdm(total=len(training_set)+len(dev_set))
+    with open(outfile, 'w') as out_file:
+        for dataset in [training_set, dev_set]:
+            for example in dataset:
+                bar.update(1)
+                text = example[0]
+                out_file.write(' </s> '.join(re.split('\n{2,}', text)).replace('\n', '') + '\n')
+    
+
 if __name__ == "__main__":
     dataset = ScotusDataset("temporal", "decisionDirection", download=True)
-    print()
+    dump_dataset(dataset, "data/scotus_v0.4/dump_temporal_train_dev.txt")
     # dataset.get_stats()
     exit(1)
 

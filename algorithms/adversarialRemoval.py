@@ -53,7 +53,7 @@ class AdversarialRemoval(SingleModelAlgorithm):
         self.featurizer = featurizer
         self.classifier = classifier
         self.adv_classifier = adv_classifier
-        self.logged_fields.append('adv_objective')
+        # self.logged_fields.append('adv_objective')
 
         # initialize adversarial model, optimizer, and scheduler
         self.adv_model = torch.nn.Sequential(featurizer, rev_grad, adv_classifier).to(config.device)
@@ -89,7 +89,7 @@ class AdversarialRemoval(SingleModelAlgorithm):
     def objective(self, results):
 
         avg_loss = self.loss.compute(results['y_pred'], results['y_true'], return_dict=False)
-        adv_loss = self.loss.compute(results['adv_y_pred'], results['g'].unsqueeze(1), return_dict=False)
+        adv_loss = self.loss.compute(results['adv_y_pred'], results['g'], return_dict=False)
 
         return avg_loss,  adv_loss
 
