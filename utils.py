@@ -9,6 +9,7 @@ import torch
 import pandas as pd
 import jsonlines
 from datetime import datetime
+import re
 try:
     import wandb
 except Exception as e:
@@ -455,7 +456,11 @@ def read_jsonl(path, data_type, attributes_to_retain=None):
             example['data_type'] = data_type
             # example['text'] = remove_labels_from_text(example['text'])
             del example['attributes']
-
+            text = example['text']
+            text = ' </s> '.join(re.split('\n{2,}', text)).replace('\n', '')
+            if text.startswith('United States Supreme Court'):
+                text = text[len('United States Supreme Court'):]
+            example['text'] = text
             example.update(attributes)
             examples.append(example)
             seen.add(case_id)

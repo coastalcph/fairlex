@@ -20,7 +20,7 @@ from tqdm import tqdm
 class ScotusDataset(WILDSDataset):
     _versions_dict = {
         "0.4": {
-            "download_url": "https://sid.erda.dk/share_redirect/DAaEgzmRb0",
+            "download_url": "https://sid.erda.dk/share_redirect/bAlosmBf2K",
             "compressed_size": 136_72,
         },
     }
@@ -116,17 +116,11 @@ class ScotusDataset(WILDSDataset):
             attributes_to_retain=self.attributes_to_retain,
         )
 
-        # discard examples tagged with 'favorable disposition for petitioning party unclear'
-        data = [x for x in train_data + dev_data + test_data if x["label_id"] != 2]
-
-        # all_labels = sorted({example["label"] for example in data})
-        # label2idx = dict(reversed(x) for x in enumerate(all_labels))
+        data = train_data + dev_data + test_data
         attribute2value2idx = dict()
         if self.protected_attribute == 'respondent':
             data = self.map_respondent(data)
         for example in data:
-            if example['text'].startswith('United States Supreme Court'):
-                example['text'] = example['text'][len("United States Supreme Court"):]
             for a in self.attributes_to_retain:
                 v = example[a]
                 if self.make_protected_group_binary and a == self.protected_attribute:
@@ -147,7 +141,6 @@ class ScotusDataset(WILDSDataset):
 
 
         for example in data:
-            # example["encoded_labels"] = example["label_id"]
             for a in self.attributes_to_retain:
                 str_val = example[a]
                 idx_val = attribute2value2idx[a][example[a]]
@@ -158,6 +151,7 @@ class ScotusDataset(WILDSDataset):
 
         if self.split_scheme == "official":
             df = pd.DataFrame(data)
+            df.fillna("")
         elif self.split_scheme == "temporal":
             df = self.__create_temporal_split(data, len(train_data), len(dev_data))
         elif self.split_scheme == "uniform":
@@ -303,7 +297,7 @@ def dump_dataset(scotus_dataset:WILDSDataset, outfile):
 
 if __name__ == "__main__":
     dataset = ScotusDataset("temporal", "decisionDirection", download=True)
-    dump_dataset(dataset, "data/scotus_v0.4/dump_temporal_train_dev.txt")
+    # dump_dataset(dataset, "data/scotus_v0.4/dump_temporal_train_dev.txt")
     # dataset.get_stats()
     exit(1)
 

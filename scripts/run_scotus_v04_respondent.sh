@@ -5,13 +5,13 @@
 #SBATCH -p gpu --gres=gpu:titanrtx:1
 #Note that a program will be killed once it exceeds this time!
 #SBATCH --time=24:00:00
-#SBATCH -o logs/scotus_v03/scotus_issue_area_%A-%a.log
+#SBATCH -o logs/scotus_v04/scotus_issue_area_%A-%a.log
 #SBATCH --array=1-4
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate fairlex 
 
 PARAM=""
-ATTRIBUTE=decisionDirection
+ATTRIBUTE=respondent
 if [[ $SLURM_ARRAY_TASK_ID == 1 ]];
 then
     ALGO=groupDRO
@@ -38,9 +38,12 @@ do
     echo 'ALGO='$ALGO
     echo 'RAND_NUM='$RAND_NUM
     COMMAND="run_expt.py --dataset scotus --algorithm $ALGO $PARAM --root_dir data \
-    --log_dir logs/scotus_v03/$ATTRIBUTE/$ALGO/$RAND/temporal --split_scheme temporal \
-    --dataset_kwargs protected_attribute=$ATTRIBUTE --seed $RAND_NUM\
-    --save_best"
+    --log_dir logs/scotus_v04/$ATTRIBUTE/$ALGO/$RAND/temporal --split_scheme temporal \
+    --dataset_kwargs protected_attribute=$ATTRIBUTE --seed $RAND_NUM \
+    --groupby_fields $ATTRIBUTE \
+    --save_best \
+    --fp16 True \
+    --n_groups_per_batch 5"
     echo ''
     echo $COMMAND
     PYTHONPATH=src python $COMMAND 

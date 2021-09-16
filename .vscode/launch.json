@@ -18,10 +18,10 @@
             "request": "launch",
             "program": "run_expt.py",
             "args": ["--dataset", "scotus", "--algorithm", "IRM", "--root_dir", "data",
-                    "--log_dir", "logs2/scotus/respondent/adversarialRemoval", "--save_best", 
+                    "--log_dir", "logs2/scotus/respondent/IRM", "--save_best", 
                     "--seed", "123", "--split_scheme", "temporal", 
-                    "--dataset_kwargs", "protected_attribute=respondent", 
-                    "--groupby_fields", "respondent",
+                    "--dataset_kwargs", "protected_attribute=decisionDirection", 
+                    "--groupby_fields", "decisionDirection",
                     "--progress_bar"],
             "console": "integratedTerminal",
             "justMyCode": false

@@ -62,7 +62,6 @@ KEYWORD_2_PETITIONER_NAME = {
 PERSON = "person"
 PUBLIC_ENTITY = "public_entity"
 ORGANIZATION = "organization"
-GROUP = "group"
 OTHER = "other"
 FACILITY = "facility"
 
@@ -102,7 +101,7 @@ RESPONDENT_MAPPING = {
     "airline": ORGANIZATION,
     "distributor, importer, or exporter of alcoholic beverages": ORGANIZATION,
     "alien, person subject to a denaturalization proceeding, or one whose citizenship is revoked": PERSON,
-    "American Medical Association": GROUP,
+    "American Medical Association": PERSON,
     "National Railroad Passenger Corp.": ORGANIZATION,
     "amusement establishment, or recreational facility": FACILITY,
     "arrested person, or pretrial detainee": PERSON,
@@ -217,7 +216,7 @@ RESPONDENT_MAPPING = {
     "public utility": OTHER,
     "publisher, publishing company": ORGANIZATION,
     "radio station": ORGANIZATION,
-    "racial or ethnic minority": GROUP,
+    "racial or ethnic minority": PERSON,
     "person or organization protesting racial or ethnic segregation or discrimination": OTHER,
     "racial or ethnic minority student or applicant for admission to an educational institution": PERSON,
     "realtor": PERSON,
@@ -257,7 +256,7 @@ RESPONDENT_MAPPING = {
     "timber company": ORGANIZATION,
     "u.s. job applicants or employees": PERSON,
     "Army and Air Force Exchange Service": OTHER,
-    "Atomic Energy Commission": GROUP,
+    "Atomic Energy Commission": PUBLIC_ENTITY,
     "Secretary or administrative unit or personnel of the U.S. Air Force": PUBLIC_ENTITY,
     "Department or Secretary of Agriculture": PUBLIC_ENTITY,
     "Alien Property Custodian": OTHER,
@@ -265,7 +264,7 @@ RESPONDENT_MAPPING = {
     "Board of Immigration Appeals": PUBLIC_ENTITY,
     "Bureau of Indian Affairs": PUBLIC_ENTITY,
     "Bonneville Power Administration": PUBLIC_ENTITY,
-    "Benefits Review Board": GROUP,
+    "Benefits Review Board": PUBLIC_ENTITY,
     "Civil Aeronautics Board": PUBLIC_ENTITY,
     "Bureau of the Census": PUBLIC_ENTITY,
     "Central Intelligence Agency": PUBLIC_ENTITY,
@@ -285,7 +284,7 @@ RESPONDENT_MAPPING = {
     "Department or Secretary of State": PUBLIC_ENTITY,
     "Department or Secretary of Transportation": PUBLIC_ENTITY,
     "Department or Secretary of Education": PUBLIC_ENTITY,
-    "U.S. Employees' Compensation Commission, or Commissioner": GROUP,
+    "U.S. Employees' Compensation Commission, or Commissioner": PUBLIC_ENTITY,
     "Equal Employment Opportunity Commission": PUBLIC_ENTITY,
     "Environmental Protection Agency or Administrator": PUBLIC_ENTITY,
     "Federal Aviation Agency or Administration": PUBLIC_ENTITY,
