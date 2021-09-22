@@ -4,6 +4,11 @@ model_defaults = {
         'max_grad_norm': 1.0,
         'scheduler': 'linear_schedule_with_warmup',
     },
+    'mini-roberta': {
+        'optimizer': 'AdamW',
+        'max_grad_norm': 1.0,
+        'scheduler': 'linear_schedule_with_warmup',
+    },
     'ecthr-mini-longformer-v2': {
         'optimizer': 'AdamW',
         'max_grad_norm': 1.0,

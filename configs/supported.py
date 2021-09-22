@@ -50,8 +50,9 @@ process_outputs_functions = {
 }
 
 # see initialize_*() functions for correspondence
-transforms = ['bert']
-models = ['mini-longformer', 'mini-xlm-longformer', 'ecthr-mini-longformer-v2', 'fscs-mini-xlm-longformer']
+transforms = ['bert', 'hier-bert']
+models = ['mini-longformer', 'mini-xlm-longformer', 'ecthr-mini-longformer-v2',
+          'fscs-mini-xlm-longformer', 'mini-roberta']
 algorithms = ['ERM', 'groupDRO', 'deepCORAL', 'IRM', 'adversarialRemoval', 'minMax', 'REx']
 optimizers = ['SGD', 'Adam', 'AdamW']
 schedulers = ['linear_schedule_with_warmup', 'ReduceLROnPlateau', 'StepLR']

@@ -1,5 +1,6 @@
 import torch.nn as nn
-from models.bert.bert import LongformerClassifier, LongformerFeaturizer
+from models.bert.bert import LongformerClassifier, LongformerFeaturizer, \
+    HierBERTClassifier, HierBERTFeaturizer
 
 
 def initialize_model(config, d_out, is_featurizer=False):
@@ -24,6 +25,16 @@ def initialize_model(config, d_out, is_featurizer=False):
             model = (featurizer, classifier)
         else:
             model = initialize_longformer_model(config, d_out)
+    elif 'bert' in config.model:
+        if is_featurizer:
+            featurizer = initialize_hierbert_model(config, d_out, is_featurizer)
+            classifier = nn.Linear(featurizer.d_out, d_out)
+            model = (featurizer, classifier)
+        else:
+            model = initialize_hierbert_model(config, d_out)
+    elif config.model == 'logistic_regression':
+        assert not is_featurizer, "Featurizer not supported for logistic regression"
+        model = nn.Linear(in_features=10000, out_features=d_out, **config.model_kwargs)
     else:
         raise ValueError(f'Model: {config.model} not recognized.')
     return model
@@ -37,4 +48,12 @@ def initialize_longformer_model(config, d_out, is_featurizer=False):
             config.model,
             num_labels=d_out,
             **config.model_kwargs)
+    return model
+
+
+def initialize_hierbert_model(config, d_out, is_featurizer=False):
+    if is_featurizer:
+        model = HierBERTFeaturizer(config)
+    else:
+        model = HierBERTClassifier(config, d_out)
     return model

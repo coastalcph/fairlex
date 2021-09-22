@@ -150,7 +150,7 @@ def main():
         **config.dataset_kwargs)
 
     # Model
-    if 'longformer' in config.model:
+    if 'longformer' in config.model or 'mini-roberta' in config.model or 'mini-xlm-roberta' in config.model:
         config.model = os.path.join(MODELS_DIR, config.model)
 
     # To implement data augmentation (i.e., have different transforms
@@ -158,9 +158,13 @@ def main():
     train_transform = initialize_transform(
         transform_name=config.train_transform,
         config=config)
-    eval_transform = initialize_transform(
-        transform_name=config.eval_transform,
-        config=config)
+
+    if config.train_transform == 'tf-idf':
+    	eval_transform = train_transform
+    else:
+    	eval_transform = initialize_transform(
+        	transform_name=config.eval_transform,
+        	config=config)
 
     train_grouper = CombinatorialGrouper(
         dataset=full_dataset,

@@ -10,6 +10,8 @@ from wilds.common.metrics.all_metrics import F1, multiclass_logits_to_pred
 from wilds.common.grouper import CombinatorialGrouper
 
 LEGAL_AREAS = {'other': 0, 'public law': 1, 'penal law': 2, 'civil law': 3, 'social law': 4, 'insurance law': 5}
+REGIONS = {'n/a': 0, 'Région lémanique': 1, 'Zürich': 2, 'Espace Mittelland': 3, 'Northwestern Switzerland': 4,
+           'Eastern Switzerland': 5, 'Central Switzerland': 6, 'Ticino': 7, 'Federation': 8}
 LANGUAGES = {'de': 0, 'fr': 1, 'it': 2}
 ISO2LANGUAGE = {'de': 'german', 'fr': 'french', 'it': 'italian'}
 
@@ -105,13 +107,14 @@ class FSCSDataset(WILDSDataset):
 
     def load_metadata(self, data_df):
         # Get metadata
-        columns = ['legal_area', 'language', 'y']
-        metadata_fields = ['legal_area', 'language', 'y']
+        columns = ['legal_area', 'language', 'region', 'y']
+        metadata_fields = ['legal_area', 'language', 'region', 'y']
         metadata_df = data_df[columns].copy()
         metadata_df.columns = metadata_fields
         ordered_maps = {}
         ordered_maps['legal_area'] = range(0, 6)
         ordered_maps['language'] = range(0, 3)
+        ordered_maps['region'] = range(0, 9)
         ordered_maps['y'] = range(0, 2)
         metadata_map, metadata = map_to_id_array(metadata_df, ordered_maps)
         return metadata_fields, torch.from_numpy(metadata.astype('long')), metadata_map
@@ -141,6 +144,7 @@ class FSCSDataset(WILDSDataset):
                     example['y'] = 1 if example['label'] == 'approval' else 0
                     example['language'] = LANGUAGES[example['language']]
                     example['legal_area'] = LEGAL_AREAS[example['legal area']]
+                    example['region'] = REGIONS[example['region']]
                     example['data_type'] = split
                     data.append(example)
         df = pd.DataFrame(data)
