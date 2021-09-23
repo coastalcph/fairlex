@@ -1,14 +1,43 @@
+import scipy
 from transformers import AutoTokenizer
 import torch
-
+from scipy.sparse import csr_matrix
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+import pickle as pkl
 
 def initialize_transform(transform_name, config):
     if transform_name is None:
         return None
     elif transform_name == 'bert':
         return initialize_bert_transform(config)
+    elif transform_name == 'tfidf':
+        return initialize_tfidf_transform(config)
+    elif transform_name == 'bow':
+        return initialize_bow_transform(config)
     else:
         raise ValueError(f"{transform_name} not recognized")
+
+def initialize_bow_transform(config):
+    assert hasattr(config, 'bow_vectorizer_path')
+    with open(config.bow_vectorizer_path, 'rb') as reader:
+        vectorizer: CountVectorizer = pkl.load(reader)
+    def transform(text):
+        sparse_matrix:csr_matrix = vectorizer.transform([text])
+        npmatrix = sparse_matrix.todense()
+        return torch.from_numpy(npmatrix).float().squeeze()
+    return transform
+
+
+def initialize_tfidf_transform(config):
+    assert 'tfidf_vectorizer_path' in config.model_kwargs
+    path = config.model_kwargs['tfidf_vectorizer_path']
+    with open(path, 'rb') as reader:
+        tfidf_vectorizer: TfidfVectorizer = pkl.load(reader)
+    def transform(text):
+        sparse_matrix:csr_matrix = tfidf_vectorizer.transform([text])
+        npmatrix = sparse_matrix.todense()
+        return torch.from_numpy(npmatrix).float().squeeze()
+    return transform
 
 
 def initialize_bert_transform(config):

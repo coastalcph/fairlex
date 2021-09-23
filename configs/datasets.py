@@ -50,26 +50,24 @@ dataset_defaults = {
     },
     'scotus': {
         'split_scheme': 'official',
-        'model': 'scotus-mini-longformer',#'allenai/longformer-base-4096',
-        'train_transform': 'bert',#'longformer',
-        'eval_transform': 'bert', #'longformer',
+        'model': 'scotus-mini-longformer',
+        # 'train_transform': 'bert',#'longformer',
+        # 'eval_transform': 'bert', #'longformer',
         'max_token_length': 4096,
-        'loss_function': 'cross_entropy',
-        'algo_log_metric': 'multi-class-f1',
+        'loss_function': 'binary_cross_entropy',
         'batch_size': 12,
-        'lr': 1e-5,
+        # 'lr': 1e-5,
         'weight_decay': 0.01,
-        'n_epochs': 10,
-        'n_groups_per_batch': 2,
+        'n_epochs': 20,
         'irm_lambda': 1.0,
         'coral_penalty_weight': 0.1,
         'loader_kwargs': {
             'num_workers': 0,
             'pin_memory': True,
         },
-        'val_metric': 'F1-micro_all',
+        'algo_log_metric': 'multi-class-f1-for-binary-loss',
+        'val_metric': 'F1-macro_all',
         'val_metric_decreasing': False,
-        'process_outputs_function': 'multiclass_logits_to_pred_v2'
     }
 }
 

@@ -87,9 +87,12 @@ class AdversarialRemoval(SingleModelAlgorithm):
         return results
 
     def objective(self, results):
-
+        adv_preds = results['adv_y_pred']
+        if self.grouper.n_groups > 2:
+            adv_preds = torch.argmax(results['adv_y_pred'], -1, keepdim=True)
+            
         avg_loss = self.loss.compute(results['y_pred'], results['y_true'], return_dict=False)
-        adv_loss = self.loss.compute(results['adv_y_pred'], results['g'], return_dict=False)
+        adv_loss = self.loss.compute(adv_preds, results['g'].unsqueeze(1), return_dict=False)
 
         return avg_loss,  adv_loss
 

@@ -24,4 +24,11 @@ model_defaults = {
         'max_grad_norm': 1.0,
         'scheduler': 'linear_schedule_with_warmup',
     },
+    'regressor':
+    {
+        'optimizer': 'AdamW',
+        'lr': 1e-3,
+        'in_dim': 10_000,
+        # 'tfidf_vectorizer_path': '/home/npf290/dev/fairlex-wilds/data/scotus_v0.4/tfidf_tokenizer.pkl'
+    }
 }

@@ -1,3 +1,4 @@
+from models.baselines.tfidf_regressor import Regressor
 import torch.nn as nn
 from models.bert.bert import LongformerClassifier, LongformerFeaturizer
 
@@ -24,10 +25,15 @@ def initialize_model(config, d_out, is_featurizer=False):
             model = (featurizer, classifier)
         else:
             model = initialize_longformer_model(config, d_out)
+    elif 'regressor' in config.model:
+        model = initialize_tfidf_regressor_model(config, d_out)
     else:
         raise ValueError(f'Model: {config.model} not recognized.')
     return model
 
+def initialize_tfidf_regressor_model(config, d_out):
+    model = Regressor(config, d_out)
+    return model
 
 def initialize_longformer_model(config, d_out, is_featurizer=False):
     if is_featurizer:

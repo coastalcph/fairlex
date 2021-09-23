@@ -3,12 +3,14 @@ import numpy as np
 from dataloaders import get_dataset
 from sklearn.metrics import f1_score
 from scipy.special import expit
-DATASET = 'ecthr'
-GROUP_FIELD = 'gender'
-N_GROUPS = 3
+import os
+DATASET = 'scotus'
+GROUP_FIELD = 'age'
+N_GROUPS = 4
+SPLIT_SCHEME = 'official'
 
-dataset = get_dataset(DATASET, group_by_fields=[GROUP_FIELD], root_dir='../data/datasets')
-for algorithm in ['ERM', 'groupDRO', 'REx']:
+dataset = get_dataset(DATASET, group_by_fields=[GROUP_FIELD], split_scheme='official', protected_attribute=GROUP_FIELD, root_dir='data/datasets')
+for algorithm in ['ERM', 'groupDRO', 'IRM']:
     scores = {'val': {'Macro-F1': []},
               'test': {'Macro-F1': []}}
 
@@ -26,9 +28,11 @@ for algorithm in ['ERM', 'groupDRO', 'REx']:
         scores['test'].update({f'Micro-F1 ({group_no + 1})': []})
 
     for seed_no in range(1, 5):
+        log_path = f'../logs_final/{DATASET}/{algorithm}/{GROUP_FIELD}/seed_{seed_no}/'
+    
         for split in ['val', 'test']:
             # ORIGINAL SCORES
-            original_df = pd.read_csv(f'../logs_final/{DATASET}/{algorithm}/{GROUP_FIELD}/seed_{seed_no}/{split}_eval.csv')
+            original_df = pd.read_csv(os.path.join(log_path, f'{split}_eval.csv'))
             scores[split]['Macro-F1'].append(original_df['F1-macro_all'].values[-1])
             for group_no in range(N_GROUPS):
                 scores[split][f'Macro-F1 ({group_no+1})'].append(original_df[f'F1-macro_{GROUP_FIELD}:{group_no}'].values[-1])
@@ -36,7 +40,7 @@ for algorithm in ['ERM', 'groupDRO', 'REx']:
             # RE-COMPUTED SCORES
             y_true = dataset.get_subset(f'{split}').y_array.numpy()
             y_pred = pd.read_csv(
-                f'../logs_final/{DATASET}/{algorithm}/{GROUP_FIELD}/seed_{seed_no}/ecthr_split:{split}_seed:{seed_no}_epoch:best_pred.csv',
+                os.path.join(log_path, f'{DATASET}_split:{split}_seed:{seed_no}_epoch:best_pred.csv'),
                 header=None).values
             y_pred = (expit(y_pred) > 0.5).astype('int')
             groups = dataset.get_subset(f'{split}').metadata_array[:, 2].numpy()

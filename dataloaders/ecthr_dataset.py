@@ -58,8 +58,8 @@ class ECtHRDataset(WILDSDataset):
         },
     }
 
-    def __init__(self, version=None, root_dir='data', download=False,
-                 split_scheme='official', group_by_fields='defendant'):
+    def __init__(self, version=None, root_dir='data/datasets', download=False,
+                 split_scheme='official', group_by_fields=('defendant',)):
         self._version = version
         # the official split is the only split
         self._split_scheme = split_scheme
@@ -177,3 +177,6 @@ class ECtHRDataset(WILDSDataset):
         df = pd.DataFrame(data)
         df = df.fillna("")
         return df
+
+if __name__ == '__main__':
+    ECtHRDataset()

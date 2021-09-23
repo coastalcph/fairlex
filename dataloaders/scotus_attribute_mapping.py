@@ -4,7 +4,7 @@ PARTY_WINNING_MAPPING = {
     "no favorable disposition for petitioning party apparent": 0,
     "petitioning party received a favorable disposition": 1,
 }
-ISSUE_AREAS = "Criminal Procedure,Civil Rights,First Amendment,Due Process,Privacy,Attorneys,Unions,Economic Activity,Judicial Power,Federalism,Interstate Relations,Federal Taxation,Miscellaneous,Private Action".split(
+ISSUE_AREAS = "Criminal Procedure,Civil Rights,First Amendment,Due Process,Privacy,Attorneys,Unions,Economic Activity,Judicial Power,Federalism,Federal Taxation".split(
     ","
 )
 ISSUE_AREA_MAPPING = {k.lower().replace(" ", "_"): i for i, k in enumerate(ISSUE_AREAS)}

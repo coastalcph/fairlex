@@ -5,7 +5,7 @@ class LongformerClassifier(LongformerForSequenceClassification):
     def __init__(self, config):
         super().__init__(config)
         self.d_out = config.num_labels
-
+        
     def __call__(self, x):
         input_ids = x[:, :, 0]
         attention_mask = x[:, :, 1]

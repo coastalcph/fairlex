@@ -448,11 +448,6 @@ def read_jsonl(path, data_type, attributes_to_retain=None):
                 continue
             if attributes_to_retain is not None:
                 attributes = {k:v for k, v in example['attributes'].items() if k in attributes_to_retain}
-            if 'dateDecision' in attributes:
-                attributes['dateDecision'] = datetime.strptime(attributes['dateDecision'], '%m/%d/%Y') 
-            if any(str(v) == 'nan' for v in attributes.values()):
-                skipped_examples_due_to_nan_attribute+=1
-                continue
             example['data_type'] = data_type
             # example['text'] = remove_labels_from_text(example['text'])
             del example['attributes']
@@ -461,12 +456,12 @@ def read_jsonl(path, data_type, attributes_to_retain=None):
             if text.startswith('United States Supreme Court'):
                 text = text[len('United States Supreme Court'):]
             example['text'] = text
+            
             example.update(attributes)
             examples.append(example)
             seen.add(case_id)
             # if len(examples) == 8:
                 # break
-    print(f'WARN: skipped {skipped_examples_due_to_nan_attribute} examples in {data_type} due to nan values.')
     return examples
 
 def remove_labels_from_text(text):

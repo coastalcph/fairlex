@@ -61,8 +61,9 @@ class SingleModelAlgorithm(GroupAlgorithm):
         
         g = self.grouper.metadata_to_group(metadata).to(self.device)
         with torch.cuda.amp.autocast(enabled=self.use_scaler):
+            
             outputs = self.model(x)
-
+            
         results = {
             'g': g,
             'y_true': y_true,
@@ -117,6 +118,8 @@ class SingleModelAlgorithm(GroupAlgorithm):
         assert self.is_training
         # process batch
         results = self.process_batch(batch)
+        if results is None:
+            return None
         self._update(results)
         # log results
         self.update_log(results)

@@ -26,11 +26,22 @@ def run_epoch(algorithm, dataset, general_logger, epoch, config, train):
     iterator = tqdm(dataset['loader']) if config.progress_bar else dataset['loader']
 
     for batch in iterator:
+        
         if train:
-            batch_results = algorithm.update(batch)
+            try:
+                batch_results = algorithm.update(batch)
+            except RuntimeError as e:
+                if 'out of memory' in str(e):
+                    print(f'| WARNING: ran out of memory, skipping this batch')
+                    for p in algorithm.model.parameters():
+                        if p.grad is not None:
+                            del p.grad  # free some memory
+                    torch.cuda.empty_cache()
+                    batch_idx += 1
+                    continue
+
         else:
             batch_results = algorithm.evaluate(batch)
-
         # These tensors are already detached, but we need to clone them again
         # Otherwise they don't get garbage collected properly in some versions
         # The subsequent detach is just for safety
@@ -46,7 +57,6 @@ def run_epoch(algorithm, dataset, general_logger, epoch, config, train):
             log_results(algorithm, dataset, general_logger, epoch, batch_idx)
 
         batch_idx += 1
-
     epoch_y_pred = torch.cat(epoch_y_pred)
     epoch_y_true = torch.cat(epoch_y_true)
     epoch_metadata = torch.cat(epoch_metadata)

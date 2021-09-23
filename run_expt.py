@@ -20,6 +20,8 @@ import logging
 logging.getLogger("transformers").setLevel(logging.ERROR)
 logging.getLogger("sklearn").setLevel(logging.ERROR)
 
+# import torch
+# torch.autograd.set_detect_anomaly(True)
 
 def main():
     ''' set default hyperparams in default_hyperparams.py '''
