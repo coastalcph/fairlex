@@ -1,9 +1,14 @@
 import scipy
 from transformers import AutoTokenizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 import torch
 from scipy.sparse import csr_matrix
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import pickle as pkl
+import os
+from data import DATA_DIR
+from nltk.corpus import stopwords
+
 
 def initialize_transform(transform_name, config):
     if transform_name is None:
@@ -14,6 +19,8 @@ def initialize_transform(transform_name, config):
         return initialize_tfidf_transform(config)
     elif transform_name == 'bow':
         return initialize_bow_transform(config)
+    elif transform_name == 'hier-bert':
+        return initialize_hierbert_transform(config)
     else:
         raise ValueError(f"{transform_name} not recognized")
 
@@ -64,6 +71,42 @@ def initialize_bert_transform(config):
              global_attention_mask),
             dim=2)
         x = torch.squeeze(x, dim=0)
+        return x
+    return transform
+
+
+def initialize_hierbert_transform(config):
+    assert 'bert' in config.model
+    assert config.max_segment_length is not None
+    assert config.max_segments is not None
+
+    tokenizer = AutoTokenizer.from_pretrained(config.model)
+
+    def transform(text):
+        paragraphs = []
+        paragraphs_tokens = {'input_ids': torch.zeros(config.max_segments, config.max_segment_length,
+                                                      dtype=torch.int32),
+                             'attention_mask': torch.zeros(config.max_segments, config.max_segment_length,
+                                                           dtype=torch.int32)}
+
+        for idx, paragraph in enumerate(text.split('</s>')[:config.max_segments]):
+            paragraphs.append(paragraph)
+
+        tokens = tokenizer(
+            paragraphs,
+            padding='max_length',
+            truncation=True,
+            max_length=config.max_segment_length,
+            return_tensors='pt')
+
+        paragraphs_tokens['input_ids'][:len(paragraphs)] = tokens['input_ids']
+        paragraphs_tokens['attention_mask'][:len(paragraphs)] = tokens['attention_mask']
+
+        x = torch.stack(
+            (paragraphs_tokens['input_ids'],
+             paragraphs_tokens['attention_mask']),
+            dim=2)
+        # x = torch.squeeze(x, dim=0)
         return x
     return transform
 

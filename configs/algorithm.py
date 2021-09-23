@@ -1,7 +1,7 @@
 algorithm_defaults = {
     'ERM': {
         'train_loader': 'standard',
-        'uniform_over_groups': False,
+        'uniform_over_groups': True,
         'eval_loader': 'standard',
     },
     'groupDRO': {
@@ -31,7 +31,7 @@ algorithm_defaults = {
         'uniform_over_groups': True,
         'distinct_groups': True,
         'eval_loader': 'standard',
-        'adv_lambda': 1.0,
+        'adv_lambda': 0.5,
     },
     'minMax': {
         'train_loader': 'group',

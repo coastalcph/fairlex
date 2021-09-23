@@ -23,7 +23,6 @@ ECHR_ARTICLES = {"0": "No Violation",
                  "11": "Freedom of assembly and association",
                  "14": "Prohibition of discrimination",
                  "P1-1": "Protection of property",
-                 "1000": "Other"
                  }
 
 GENDERS = {'n/a': 0, 'male': 1, 'female': 2}
@@ -161,9 +160,8 @@ class ECtHRDataset(WILDSDataset):
                     example.pop('court_assessment_references', None)
                     example['labels'] = [1 if article in example['violated_articles'] else 0 for article in
                                          ECHR_ARTICLES]
-                    example['labels'][0] = 1 if len(example['violated_articles']) == 0 else 0
-                    example['labels'][-1] = 1 if len(example['violated_articles']) \
-                                                 and not sum(example['labels'][1:-1]) else 0
+                    example['labels'][0] = 1 if len(example['labels']) == 0 else 0
+
                     example['defendant'] = 0 if len(set(example['defendants']).
                                                     intersection(EAST_EUROPEAN_COUNTRIES)) else 1
                     example['gender'] = GENDERS[example['applicant_gender']]

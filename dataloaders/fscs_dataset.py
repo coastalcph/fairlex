@@ -9,7 +9,9 @@ from wilds.common.utils import map_to_id_array
 from wilds.common.metrics.all_metrics import F1, multiclass_logits_to_pred
 from wilds.common.grouper import CombinatorialGrouper
 
-LEGAL_AREAS = {'public law': 0, 'penal law': 1, 'civil law': 2, 'social law': 3, 'insurance law': 4, 'other': 5}
+LEGAL_AREAS = {'other': 0, 'public law': 1, 'penal law': 2, 'civil law': 3, 'social law': 4, 'insurance law': 5}
+REGIONS = {'n/a': 0, 'Région lémanique': 1, 'Zürich': 2, 'Espace Mittelland': 3, 'Northwestern Switzerland': 4,
+           'Eastern Switzerland': 5, 'Central Switzerland': 6, 'Ticino': 7, 'Federation': 8}
 LANGUAGES = {'de': 0, 'fr': 1, 'it': 2}
 ISO2LANGUAGE = {'de': 'german', 'fr': 'french', 'it': 'italian'}
 
@@ -48,8 +50,8 @@ class FSCSDataset(WILDSDataset):
         # the official split is the only split
         self._split_scheme = split_scheme
         self._y_type = 'long'
-        self._y_size = len(2)
-        self._n_classes = len(2)
+        self._y_size = 2
+        self._n_classes = 2
         # path
         self._data_dir = self.initialize_data_dir(root_dir, download)
         # Load data
@@ -61,7 +63,7 @@ class FSCSDataset(WILDSDataset):
         # Get metadata
         self._metadata_fields, self._metadata_array, self._metadata_map = self.load_metadata(self.data_df)
         # Get y from metadata
-        self._y_array = torch.LongTensor(self.data_df['labels'])
+        self._y_array = torch.LongTensor(self.data_df['label'])
         # Set split info
         self.initialize_split_dicts()
         for split in self.split_dict:
@@ -90,7 +92,7 @@ class FSCSDataset(WILDSDataset):
             - results (dictionary): Dictionary of evaluation metrics
             - results_str (str): String summarizing the evaluation metrics
         """
-        metric = F1(prediction_fn=multiclass_logits_to_pred, average='micro')
+        metric = F1(prediction_fn=multiclass_logits_to_pred, average='macro')
         return self.standard_group_eval(
             metric,
             self._eval_grouper,
@@ -105,13 +107,15 @@ class FSCSDataset(WILDSDataset):
 
     def load_metadata(self, data_df):
         # Get metadata
-        columns = ['legal_area', 'language']
-        metadata_fields = ['legal_area', 'language']
+        columns = ['legal_area', 'language', 'region', 'y']
+        metadata_fields = ['legal_area', 'language', 'region', 'y']
         metadata_df = data_df[columns].copy()
         metadata_df.columns = metadata_fields
         ordered_maps = {}
-        ordered_maps['legal_area'] = range(0, 5)
+        ordered_maps['legal_area'] = range(0, 6)
         ordered_maps['language'] = range(0, 3)
+        ordered_maps['region'] = range(0, 9)
+        ordered_maps['y'] = range(0, 2)
         metadata_map, metadata = map_to_id_array(metadata_df, ordered_maps)
         return metadata_fields, torch.from_numpy(metadata.astype('long')), metadata_map
 
@@ -119,7 +123,7 @@ class FSCSDataset(WILDSDataset):
         if self.split_scheme == 'official':
             self._eval_grouper = CombinatorialGrouper(
                 dataset=self,
-                groupby_fields=['industry'])
+                groupby_fields=self.group_by_fields)
         else:
             raise ValueError(f'Split scheme {self.split_scheme} not recognized')
 
@@ -136,9 +140,11 @@ class FSCSDataset(WILDSDataset):
                         else:
                             sentences.append(sent)
                     example['text'] = ' </s> '.join(sentences)
-                    example['label'] = [0, 1] if example['decision'] == 'approval' else [1, 0]
+                    example['label'] = 1 if example['label'] == 'approval' else 0
+                    example['y'] = 1 if example['label'] == 'approval' else 0
                     example['language'] = LANGUAGES[example['language']]
                     example['legal_area'] = LEGAL_AREAS[example['legal area']]
+                    example['region'] = REGIONS[example['region']]
                     example['data_type'] = split
                     data.append(example)
         df = pd.DataFrame(data)
