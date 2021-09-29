@@ -51,7 +51,7 @@ do
     --lr 1e-5 \
     --train_transform bert \
     --eval_transform bert \
-    --model scotus-mini-longformer \
+    --model scotus-mini-hier-bert \
     --save_best \
     --fp16 True \
     --n_groups_per_batch 4 \
