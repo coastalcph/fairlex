@@ -178,3 +178,5 @@ class HierBERTFeaturizer(torch.nn.Module):
         pooled_output, _ = torch.max(seg_encoder_outputs, 1)
 
         return pooled_output
+
+
