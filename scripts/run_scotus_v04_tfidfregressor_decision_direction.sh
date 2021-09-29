@@ -21,7 +21,7 @@ for RAND_NUM in 1 2 3 4 5
 do
     echo 'ALGO='$ALGO
     echo 'RAND_NUM='$RAND_NUM
-    COMMAND="run_expt.py --dataset scotus --algorithm $ALGO $PARAM --root_dir data/datasets \
+    COMMAND="run_expt.py --dataset scotus --algorithm $ALGO --root_dir data/datasets \
     --log_dir logs_final_tfidf_regressor/scotus/$ALGO/$ATTRIBUTE/seed_$RAND_NUM/ --split_scheme official \
     --seed $RAND_NUM \
     --groupby_fields $ATTRIBUTE \

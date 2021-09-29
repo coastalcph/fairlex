@@ -1,94 +1,72 @@
 import pandas as pd
 import numpy as np
-from dataloaders import get_dataset
+# from dataloaders import get_dataset
 from sklearn.metrics import f1_score
-import os
 from scipy.special import expit
+import os
+from argparse import ArgumentParser
+# DATASET = 'ecthr'
+# DATASET = 'fscs'
+# GROUP_FIELDS = {'gender': (1, 3), 'age': (1, 4), 'defendant': (0, 2)}
+# GROUP_FIELDS = {'language': (0, 3), 'region': (1, 9), 'legal_area': (1, 6)}
+# LOG_DIR = 'linear_logs/batch_12'  # 'linear_logs/batch_12'
+
+GROUP_FIELDS_BY_DATASET={'scotus':{'decisionDirection': (0,2), 'respondent':(0, 5)}, 'ecthr':{'gender': (1, 3), 'age': (1, 4), 'defendant': (0, 2)}, 
+'fscr': {'language': (0, 3), 'region': (1, 9), 'legal_area': (1, 6)}}
+
+def compute(dataset, log_dir):
+    group_fields = GROUP_FIELDS_BY_DATASET[dataset]
+    for group_field, (first_group, no_groups) in group_fields.items():
+        if not os.path.exists(f'{log_dir}/{dataset}/ERM/{group_field}'):
+            continue
+        print('-' * 150)
+        print(f'{group_field.upper()} ({no_groups} GROUPS)')
+        print('-' * 150)
+        # dataset = get_dataset(DATASET, group_by_fields=[group_field], root_dir='../data/datasets')
+        for algorithm in ['ERM', 'adversarialRemoval', 'groupDRO', 'IRM', 'REx']:
+            if not os.path.exists(f'{log_dir}/{dataset}/{algorithm}/{group_field}'):
+                continue
+
+            scores = {'val': {'mF1': [], 'mF1[group]': [], 'GD': []},
+            'test': {'mF1': [], 'mF1[group]': [], 'GD': []}}
+
+            for group_no in range(first_group, no_groups):
+                scores['val'].update({f'mF1 ({group_no+1})': []})
+            for group_no in range(first_group, no_groups):
+                scores['test'].update({f'mF1 ({group_no+1})': []})
 
 
+            try:
+                for seed_no in range(1, 5):
+                    try:
+                        for split in ['val', 'test']:
+                            # ORIGINAL SCORES
+                            original_df = pd.read_csv(f'{log_dir}/{dataset}/{algorithm}/{group_field}/seed_{seed_no}/{split}_eval.csv')
+                            scores[split]['mF1'].append(original_df['F1-macro_all'].values[-1])
+                            group_wise_scores = []
+                            for group_no in range(first_group, no_groups):
+                                scores[split][f'mF1 ({group_no+1})'].append(original_df[f'F1-macro_{group_field}:{group_no}'].values[-1])
+                                group_wise_scores.append(original_df[f'F1-macro_{group_field}:{group_no}'].values[-1])
+                            group_wise_scores = [s for s in group_wise_scores if s]
+                            scores[split]['GD'].append(np.std(group_wise_scores))
+                            scores[split]['mF1[group]'].append(group_wise_scores)
 
+                    except:
+                        continue
 
-n_groups_by_field = {'respondent': 5, 'decisionDirection': 2, 'age':4, 'gender':3, 'defendant':2}
+                print('-' * 150)
+                print(f'{algorithm.upper()} ({algorithm.upper()})')
+                print('-' * 150)
+                for split in ['val', 'test']:
+                    print(f'{split.upper()}:\t' + '\t'.join([f'{k}: {np.mean(v):.2%} ± {np.std(v):.2%}' for k, v in scores[split].items()]))
+                print()
+            except:
+                continue
 
-DATASET = 'scotus'
-GROUP_FIELD = 'decisionDirection'
-N_GROUPS = n_groups_by_field[GROUP_FIELD]
-SPLIT_SCHEME = 'official'
-logs_path_base = f'logs_final/{DATASET}/'
-available_algorithms = ['ERM', 'adversarialRemoval', 'groupDRO', 'IRM', 'REx']
-dataset = get_dataset(DATASET, group_by_fields=[GROUP_FIELD], split_scheme='official', root_dir='data/datasets')
-
-for algorithm in available_algorithms:
-    algo_log_path = os.path.join(logs_path_base, algorithm, GROUP_FIELD)
-    scores = {'val': {'Macro-F1': []},
-              'test': {'Macro-F1': []}}
-
-    for group_no in range(N_GROUPS):
-        scores['val'].update({f'Macro-F1 ({group_no+1})': []})
-    for group_no in range(N_GROUPS):
-        scores['test'].update({f'Macro-F1 ({group_no+1})': []})
-
-    scores['val'].update({f'Micro-F1': []})
-    scores['test'].update({f'Micro-F1': []})
-
-    for group_no in range(N_GROUPS):
-        scores['val'].update({f'Micro-F1 ({group_no + 1})': []})
-    for group_no in range(N_GROUPS):
-        scores['test'].update({f'Micro-F1 ({group_no + 1})': []})
-    metrics_to_compute = 'F1-micro'
-    metrics_available = 'F1-macro'
-    metrics_to_compute_name = 'Micro-F1'
-    metrics_available_name = 'Macro-F1'
-    for seed_no in range(1, 6):
-        seed_log_path = os.path.join(algo_log_path, f'seed_{seed_no}')
-    
-        for split in ['val', 'test']:
-            # ORIGINAL SCORES
-            original_df = pd.read_csv(os.path.join(seed_log_path, f'{split}_eval.csv'))
-            if any(metrics_available in x for x in original_df.columns):
-                metrics_to_compute = 'F1-macro'
-                metrics_to_compute_name = 'Macro-F1'
-            else:
-                assert any(metrics_to_compute in x for x in original_df.columns)
-                aux = metrics_to_compute
-                aux_name = metrics_to_compute_name
-                metrics_to_compute = metrics_available
-                metrics_to_compute_name = metrics_available_name
-                metrics_available = aux
-                metrics_available_name = aux_name
-            scores[split][metrics_available_name].append(original_df[metrics_available + '_all'].values[-1])
-            for group_no in range(N_GROUPS):
-                scores[split][f'{metrics_available_name} ({group_no+1})'].append(original_df[f'{metrics_available}_{GROUP_FIELD}:{group_no}'].values[-1])
-
-            # RE-COMPUTED SCORES
-            y_true = dataset.get_subset(f'{split}').y_array.numpy()
-            y_pred = pd.read_csv(
-                os.path.join(seed_log_path, f'{DATASET}_split:{split}_seed:{seed_no}_epoch:best_pred.csv'),
-                header=None).values
-            labels = None
-            if DATASET == 'scotus':
-                labels = list(range(len(y_true[0])))
-                y_pred = np.argmax(y_pred, -1).astype('int')
-                y_true = np.argmax(y_true, -1).astype('int')
-            else:
-                y_pred = (expit(y_pred) > 0.5).astype('int')
-
-            group_position = dataset._metadata_fields.index(GROUP_FIELD)
-            groups = dataset.get_subset(f'{split}').metadata_array[:, group_position].numpy()
-            scores[split][metrics_to_compute_name].append(f1_score(y_true, y_pred, average='macro' if 'macro' in metrics_to_compute else 'micro', labels=labels, zero_division=0))
-            for group_no in range(N_GROUPS):
-                y_pred_g = []
-                y_true_g = []
-                for y, y_hat, group in zip(y_true, y_pred, groups):
-                    if group == group_no:
-                        y_true_g.append(y)
-                        y_pred_g.append(y_hat)
-                    
-                score = f1_score(y_true_g, y_pred_g, average='macro' if 'macro' in metrics_to_compute else 'micro', labels = labels, zero_division=0)
-                scores[split][f'{metrics_to_compute_name} ({group_no+1})'].append(score)
-    print('-' * 150)
-    print(f'{algorithm.upper()}')
-    print('-' * 150)
-    for split in ['val', 'test']:
-        print(f'{split.upper()}:\t' + '\t'.join([f'{k}: {np.mean(v):.2%} ± {np.std(v):.2%} {sorted(v)[0]:.2%}' for k, v in scores[split].items() if 'Macro' in k] ))
+if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument('--dataset', choices=['scotus', 'ecthr', 'fscs'])
+    parser.add_argument('--log_dir', type=str, required=True)
+    args = parser.parse_args()
+    compute(args.dataset, args.log_dir)
 

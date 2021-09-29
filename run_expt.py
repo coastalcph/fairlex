@@ -1,11 +1,15 @@
+from typing import NamedTuple
+from dataloaders.ecthr_dataset import ECtHRDataset
+from dataloaders.scotus_dataset import ScotusDataset
 import os
 import argparse
 import torch
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from tqdm.std import tqdm
 
 from wilds.common.data_loaders import get_train_loader, get_eval_loader
 from wilds.common.grouper import CombinatorialGrouper
+from wilds.datasets.wilds_dataset import WILDSDataset
 
 from utils import set_seed, Logger, BatchLogger, log_config, ParseKwargs, load, initialize_wandb, log_group_data, parse_bool, get_model_prefix
 from train import train, evaluate
@@ -16,12 +20,19 @@ import configs.supported as supported
 from dataloaders import get_dataset
 from data import MODELS_DIR
 import logging
+import pandas as pd
+import numpy as np
+from scipy.special import expit
 
 logging.getLogger("transformers").setLevel(logging.ERROR)
 logging.getLogger("sklearn").setLevel(logging.ERROR)
 
 # import torch
 # torch.autograd.set_detect_anomaly(True)
+
+
+    
+
 
 def main():
     ''' set default hyperparams in default_hyperparams.py '''
@@ -114,13 +125,17 @@ def main():
     parser.add_argument('--use_wandb', type=parse_bool, const=True, nargs='?', default=False)
     parser.add_argument('--progress_bar', type=parse_bool, const=True, nargs='?', default=False)
     parser.add_argument('--resume', type=parse_bool, const=True, nargs='?', default=False)
+    parser.add_argument('--model_path', type=str, default=None)
 
     config = parser.parse_args()
     config = populate_defaults(config)
 
     # set device
     config.device = torch.device("cuda:" + str(config.device)) if torch.cuda.is_available() else torch.device("cpu")
-
+    
+    
+    
+    
     # Initialize logs
     if os.path.exists(config.log_dir) and config.resume:
         resume = True
@@ -151,7 +166,7 @@ def main():
         split_scheme=config.split_scheme,
         group_by_fields=config.groupby_fields,
         **config.dataset_kwargs)
-
+        
     # Model
     if 'longformer' in config.model or 'mini-roberta' in config.model or 'mini-xlm-roberta' in config.model:
         config.model = os.path.join(MODELS_DIR, config.model)
@@ -239,13 +254,16 @@ def main():
         config=config,
         datasets=datasets,
         train_grouper=train_grouper)
+    AuxConfig = namedtuple('AuxConfig', ["log_dir", "seed", "dataset_kwargs"])
 
-    model_prefix = get_model_prefix(datasets['train'], config)
+    aux_config = AuxConfig(log_dir = config.model_path, seed=config.seed, dataset_kwargs=config.dataset_kwargs)
+    model_prefix = get_model_prefix(datasets['train'], config) if config.model_path is None else get_model_prefix(datasets['train'], aux_config)
     if not config.eval_only:
         # Load saved results if resuming
         resume_success = False
         if resume:
-            save_path = model_prefix + 'epoch:last_model.pth'
+            # save_path = model_prefix + 'epoch:last_model.pth'
+            save_path = model_prefix + 'epoch:best_model.pth'
             if not os.path.exists(save_path):
                 epochs = [
                     int(file.split('epoch:')[1].split('_')[0])
@@ -264,6 +282,8 @@ def main():
         if not resume_success:
             epoch_offset = 0
             best_val_metric = None
+        
+
 
         # iterator = tqdm(datasets['dev']['loader']) if config.progress_bar else datasets['train']['loader']
         # c = 0
@@ -295,6 +315,7 @@ def main():
             eval_model_path = model_prefix + 'epoch:best_model.pth'
         else:
             eval_model_path = model_prefix + f'epoch:{config.eval_epoch}_model.pth'
+        logger.write(f"Losding model from {eval_model_path}\n")
         best_epoch, best_val_metric = load(algorithm, eval_model_path)
         if config.eval_epoch is None:
             epoch = best_epoch

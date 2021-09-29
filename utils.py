@@ -437,7 +437,6 @@ def get_info_logger(name):
 
 def read_jsonl(path, data_type, attributes_to_retain=None):
     examples = list()
-    skipped_examples_due_to_nan_attribute = 0
     seen = set()
     with jsonlines.open(path) as lines:
         for line_data in lines:

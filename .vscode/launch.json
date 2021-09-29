@@ -18,9 +18,9 @@
             "request": "launch",
             "program": "run_expt.py",
             "args": ["--dataset", "scotus", "--algorithm", "ERM",
-                    "--root_dir", "data/datasets/",
+                    "--root_dir", "data/linear_interpreter_datasets_decision_direction_seed_1/",
                     "--log_dir", "logs2/scotus/respondent/erm", "--save_best", 
-                    "--seed", "123", 
+                    "--seed", "1", 
                     "--split_scheme", "official", 
                     // "--dataset_kwargs", "protected_attribute=decisionDirection", 
                     "--groupby_fields", "respondent",
@@ -29,7 +29,10 @@
                     "--train_transform", "tfidf", 
                     "--eval_transform", "tfidf", 
                     "--lr", "3e-3",
-                    "--model_kwargs", "tfidf_vectorizer_path=/home/npf290/dev/fairlex-wilds/data/scotus_v0.4/tfidf_tokenizer.pkl"],
+                    "--resume", "True",
+                    "--model_kwargs",  "tfidf_vectorizer_path=/home/npf290/dev/fairlex-wilds/data/datasets/scotus_v0.4/tfidf_tokenizer_3grams_10000.pkl",
+                    "--model_path", "/home/npf290/dev/fairlex-wilds/logs_final_tfidf_regressor/scotus/ERM/decisionDirection/seed_1"
+                    ],
             "console": "integratedTerminal",
             "justMyCode": false
         },

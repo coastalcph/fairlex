@@ -12,6 +12,7 @@ import re
 from wilds.common.metrics.all_metrics import F1, multiclass_logits_to_pred
 from utils import get_info_logger, read_jsonl
 from wilds.common.grouper import CombinatorialGrouper
+import numpy as np
 from tqdm import tqdm
 
 
@@ -195,10 +196,68 @@ class ScotusDataset(WILDSDataset):
                     bar.update(1)
                     text = example[0]
                     out_file.write(' </s> '.join(re.split('\n{2,}', text)).replace('\n', '') + '\n')
-    
+
+    @staticmethod
+    def __load_predictions(path):
+        predictions = list()
+        with open(path) as lines:
+            for line in lines:
+                pred = np.array([float(x) for x in line.strip().split(',')])
+                predictions.append(pred)
+        predictions = np.stack(predictions, 0)
+        return np.argmax(predictions, -1)
+
+    @staticmethod
+    def dump_error_dataset(data_dir, logdir:str, seed:int, outdir:str, attribute_filter:tuple=None):
+        dev_data, test_data = [], []
+        seen = set()
+        with jsonlines.open(os.path.join(data_dir, "scotus.dev.jsonl")) as lines:
+            for line_data in lines:
+                example = dict(line_data)
+                if example['attributes']['caseId'] in seen:
+                    continue
+                seen.add(example['attributes']['caseId'])
+                dev_data.append(example)
+        seen = set()
+        with jsonlines.open(os.path.join(data_dir, "scotus.test.jsonl")) as lines:
+            for line_data in lines:
+                example = dict(line_data)
+                if example['attributes']['caseId'] in seen:
+                    continue
+                seen.add(example['attributes']['caseId'])
+                test_data.append(example)
+        
+        val_pred = ScotusDataset.__load_predictions(os.path.join(logdir, f'scotus_split:val_seed:{seed}_epoch:best_pred.csv'))
+        test_pred = ScotusDataset.__load_predictions(os.path.join(logdir, f'scotus_split:test_seed:{seed}_epoch:best_pred.csv'))
+        
+        val_true = np.array([x['label_id'] for x in dev_data])
+        test_true = np.array([x['label_id'] for x in test_data])
+
+        val_errors = val_pred != val_true
+        test_errors = test_pred != test_true
+        
+        dev_data = np.array(dev_data)[val_errors].tolist()
+        test_data = np.array(test_data)[test_errors].tolist()
+        if attribute_filter is not None:
+            att_name, att_value = attribute_filter
+            dev_data = list(filter(lambda example: example['attributes'][att_name] == att_value, dev_data))
+            test_data = list(filter(lambda example: example['attributes'][att_name] == att_value, test_data))
+        dataset = dev_data + test_data
+        with jsonlines.open(os.path.join(outdir, 'scotus.train.jsonl'), 'w') as writer_train, jsonlines.open(os.path.join(outdir, 'scotus.dev.jsonl'), 'w') as writer_dev, jsonlines.open(os.path.join(outdir, 'scotus.test.jsonl'), 'w') as writer_test:
+            for o in dataset:
+                writer_train.write(o)
+                writer_dev.write(o)
+                writer_test.write(o)
+        open(os.path.join(outdir,'RELEASE_v0.4.txt'), 'w').close()
 
 if __name__ == "__main__":
-    dataset = ScotusDataset()
+    # dataset = ScotusDataset()
+
+    ScotusDataset.dump_error_dataset('data/datasets/scotus_v0.4', 
+    '/home/npf290/dev/fairlex-wilds/logs_final_tfidf_regressor/scotus/ERM/respondent/seed_1', 
+    1, 
+    '/home/npf290/dev/fairlex-wilds/data/linear_interpreter_datasets_decision-direction=liberal_seed_1/scotus_v0.4',
+    ('decisionDirection', 'liberal'))
     # dump_dataset(dataset, "data/scotus_v0.4/dump_temporal_train_dev.txt")
     # dataset.get_stats()
     exit(1)
