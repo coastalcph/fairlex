@@ -56,9 +56,11 @@ dataset_defaults = {
     'scotus': {
         'split_scheme': 'official',
         'model': 'scotus-mini-hier-bert',
-        # 'train_transform': 'bert',#'longformer',
-        # 'eval_transform': 'bert', #'longformer',
+        # 'train_transform': 'hier-bert',#'longformer',
+        # 'eval_transform': 'hier-bert', #'longformer',
         'max_token_length': 4096,
+        'max_segments': 32,
+        'max_segment_length': 128,
         'loss_function': 'binary_cross_entropy',
         'batch_size': 12,
         # 'lr': 1e-5,

@@ -28,7 +28,7 @@ def initialize_model(config, d_out, is_featurizer=False):
             model = initialize_longformer_model(config, d_out)
     elif 'regressor' in config.model:
         model = initialize_tfidf_regressor_model(config, d_out)
-    elif 'hier-bert':
+    elif 'hier-bert' in config.model:
         if is_featurizer:
             featurizer = initialize_hierbert_model(config, d_out, True)
             classifier = nn.Linear(featurizer.d_out, d_out)
