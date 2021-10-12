@@ -150,3 +150,4 @@ logs_final_*
 .vscode/
 .vscode/
 scotus.hier-bert.train_predictions.txt
+*.swp
