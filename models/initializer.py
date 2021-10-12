@@ -34,7 +34,7 @@ def initialize_model(config, d_out, is_featurizer=False):
             model = initialize_hierbert_model(config, d_out)
     elif config.model == 'logistic_regression':
         assert not is_featurizer, "Featurizer not supported for logistic regression"
-        model = nn.Linear(in_features=10000, out_features=d_out, **config.model_kwargs)
+        model = nn.Linear(in_features=5000, out_features=d_out, **config.model_kwargs)
     else:
         raise ValueError(f'Model: {config.model} not recognized.')
     return model

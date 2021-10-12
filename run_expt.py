@@ -61,7 +61,7 @@ def main():
     parser.add_argument('--max_token_length', type=int)
 
     # Objective
-    parser.add_argument('--loss_function', choices = supported.losses)
+    parser.add_argument('--loss_function', choices=supported.losses)
 
     # Algorithm
     parser.add_argument('--groupby_fields', nargs='+')
@@ -152,6 +152,9 @@ def main():
     # Model
     if 'longformer' in config.model or 'mini-roberta' in config.model or 'mini-xlm-roberta' in config.model:
         config.model = os.path.join(MODELS_DIR, config.model)
+
+    if config.model == 'logistic_regression':
+        config.train_transform = 'tf-idf'
 
     # To implement data augmentation (i.e., have different transforms
     # at training time vs. test time), modify these two lines:

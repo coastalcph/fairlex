@@ -1,10 +1,14 @@
+import re
+
+import nltk
 from transformers import AutoTokenizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 import torch
 import os
 from data import DATA_DIR
 from nltk.corpus import stopwords
-
+import thulac
+import stopwordsiso
 
 def initialize_transform(transform_name, config):
     if transform_name is None:
@@ -84,16 +88,27 @@ def initialize_hierbert_transform(config):
 
 
 def initialize_tfidf(config):
+    cut = thulac.thulac(seg_only=True)
+    def preprocess_text(text: str):
+        return re.sub('[0-9]+', ' ', text)
+
+    def tokenize(text: str):
+        if config.dataset in ['ecthr', 'scotus']:
+            return nltk.word_tokenize(text)
+        elif config.dataset == 'spc':
+            return cut.cut(text, text=True)
+        else:
+            return nltk.word_tokenize(text, language='german')
+
     if config.dataset in ['ecthr', 'scotus']:
         stop_words = set(stopwords.words('english'))
-        token_pattern = r"(?u)\b[a-zA-Z][a-zA-Z]+\b"
+    elif config.dataset == 'spc':
+        stop_words = None #set(list(stopwordsiso.stopwords("zh")) + ['借傥', '兼', '前', '唷', '啪', '啷', '喔', '天', '始', '漫', '然', '特', '竟', '莫', '见', '设', '达'])
     else:
         stop_words = set(stopwords.words('german') + stopwords.words('french') + stopwords.words('italian'))
-        token_pattern = r"(?u)\b[a-zA-ZÊõüèëØÅçéá̊òąàôœå≅êûßÖíä§ÂÇñǗÈËãøαÉÀĄïṣùâóÎÄúÓæöμÔìî]" \
-                        r"[a-zA-ZÊõüèëØÅçéá̊òąàôœå≅êûßÖíä§ÂÇñǗÈËãøαÉÀĄïṣùâóÎÄúÓæöμÔìî]+\b"
 
-    vectorizer = TfidfVectorizer(ngram_range=(1, 3), max_features=10000, stop_words=stop_words,
-                                 token_pattern=token_pattern, lowercase=False)
+    vectorizer = TfidfVectorizer(ngram_range=(1, 3), max_features=5000, stop_words=stop_words,
+                                 preprocessor=preprocess_text, lowercase=False, tokenizer=tokenize, min_df=5)
     with open(os.path.join(DATA_DIR, 'datasets', f'{config.dataset}_v1.0', f'{config.dataset}_dump.txt')) as file:
         vectorizer.fit(file.readlines())
     print('VECTORIZER TRAINED !!!')

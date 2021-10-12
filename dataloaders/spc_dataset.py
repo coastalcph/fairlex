@@ -4,53 +4,38 @@ import torch
 import pandas as pd
 from wilds.datasets.wilds_dataset import WILDSDataset
 from wilds.common.utils import map_to_id_array
-from configs.supported import F1, binary_logits_to_pred_v2
+from wilds.common.metrics.all_metrics import F1, multiclass_logits_to_pred
 from wilds.common.grouper import CombinatorialGrouper
 
-EAST_EUROPEAN_COUNTRIES = {'RUSSIA', 'TURKEY', 'UKRAINE', 'POLAND', 'BULGARIA', 'CROATIA', 'HUNGARY',
-                           'ROMANIA', 'SLOVAKIA', 'MOLDOVA', 'SLOVENIA', 'LITHUANIA', 'SERBIA', 'AZERBAIJAN',
-                           'CZECH REPUBLIC', 'GEORGIA', 'ESTONIA', 'BOSNIA & HERZEGOVINA', 'NORTH MACEDONIA',
-                           'FORMER YUGOSLAV MACEDONIA', 'ARMENIA', 'LATVIA', 'MONTENEGRO'}
-
-ECHR_ARTICLES = {
-                 # "0": "No Violation",
-                 "2": "Right to life",
-                 "3": "Prohibition of torture",
-                 "5": "Right to liberty and security",
-                 "6": "Right to a fair trial",
-                 "8": "Right to respect for private and family life",
-                 "9": "Freedom of thought, conscience and religion",
-                 "10": "Freedom of expression",
-                 "11": "Freedom of assembly and association",
-                 "14": "Prohibition of discrimination",
-                 "P1-1": "Protection of property",
-                 }
-
-GENDERS = {'n/a': 0, 'male': 1, 'female': 2}
-AGE_GROUPS = {'n/a': 0, '<=35': 1, '<=65': 2, '>65': 3}
+REGIONS = {'Beijing': 0, 'Liaoning': 1, 'Hunan': 2, 'Guangdong': 3, 'Sichuan': 4, 'Guangxi': 5, 'Zhejiang': 6}
+GENDERS = {'M': 0, 'F': 1}
+CRIMES = {'None': 0, 'IntentionalInjury': 1, 'Theft': 2, 'TrafficCrime': 3,
+          'DrugTrans': 4, 'Fraud': 5, 'ProvokeTrouble': 6}
+TERMS = {'0 months': 0, '<=6 months': 1, '<=9 months': 2, '<=12 months': 3, '<=24 months': 4,
+         '<=36 months': 5, '<=60 months': 6, '<=84 months': 7, '<=120 months': 8, '>120 months': 9}
 
 
-class ECtHRDataset(WILDSDataset):
+class SPCDataset(WILDSDataset):
     """
-    ECtHR dataset.
-    This is a modified version of the 2021 ECtHR dataset.
+    SPC dataset.
+    This is a modified version of the 2021 SPC dataset.
 
     Supported `split_scheme`:
         'official': official split
 
     Input (x):
-        Review text of maximum token length of 2048.
+        Case facts of maximum token length of 4096.
 
     Label (y):
-        y is the article violations
+        y is 1 if appeal is approved, otherwise 0
 
     Metadata:
-        defendant: defendant Group
+        industry_sector: defendant Group
 
     Website:
         https://nijianmo.github.io/amazon/index.html
     """
-    _dataset_name = 'ecthr'
+    _dataset_name = 'spc'
     _versions_dict = {
         '1.0': {
             'download_url': 'http://archive.org/download/ECtHR-NAACL2021/dataset.zip',
@@ -59,13 +44,13 @@ class ECtHRDataset(WILDSDataset):
     }
 
     def __init__(self, version=None, root_dir='data', download=False,
-                 split_scheme='official', group_by_fields='defendant'):
+                 split_scheme='official', group_by_fields='region'):
         self._version = version
         # the official split is the only split
         self._split_scheme = split_scheme
         self._y_type = 'long'
-        self._y_size = len(ECHR_ARTICLES)
-        self._n_classes = len(ECHR_ARTICLES)
+        self._y_size = 7
+        self._n_classes = 7
         # path
         self._data_dir = self.initialize_data_dir(root_dir, download)
         # Load data
@@ -77,7 +62,7 @@ class ECtHRDataset(WILDSDataset):
         # Get metadata
         self._metadata_fields, self._metadata_array, self._metadata_map = self.load_metadata(self.data_df)
         # Get y from metadata
-        self._y_array = torch.FloatTensor(self.data_df['labels'])
+        self._y_array = torch.LongTensor(self.data_df['label'])
         # Set split info
         self.initialize_split_dicts()
         for split in self.split_dict:
@@ -106,7 +91,7 @@ class ECtHRDataset(WILDSDataset):
             - results (dictionary): Dictionary of evaluation metrics
             - results_str (str): String summarizing the evaluation metrics
         """
-        metric = F1(prediction_fn=binary_logits_to_pred_v2, average='macro')
+        metric = F1(prediction_fn=multiclass_logits_to_pred, average='macro')
         return self.standard_group_eval(
             metric,
             self._eval_grouper,
@@ -121,14 +106,13 @@ class ECtHRDataset(WILDSDataset):
 
     def load_metadata(self, data_df):
         # Get metadata
-        columns = ['defendant', 'age', 'gender']
-        metadata_fields = ['defendant', 'age', 'gender']
+        columns = ['gender', 'region']
+        metadata_fields = ['gender', 'region']
         metadata_df = data_df[columns].copy()
         metadata_df.columns = metadata_fields
         ordered_maps = {}
-        ordered_maps['defendant'] = range(0, 2)
-        ordered_maps['gender'] = range(0, 3)
-        ordered_maps['age'] = range(0, 4)
+        ordered_maps['gender'] = range(0, 2)
+        ordered_maps['region'] = range(0, 7)
         metadata_map, metadata = map_to_id_array(metadata_df, ordered_maps)
         return metadata_fields, torch.from_numpy(metadata.astype('long')), metadata_map
 
@@ -141,38 +125,16 @@ class ECtHRDataset(WILDSDataset):
             raise ValueError(f'Split scheme {self.split_scheme} not recognized')
 
     def read_jsonl(self, data_dir):
-        def age_group(birth_year, jugdment_year):
-            if birth_year == 'n/a':
-                return AGE_GROUPS['n/a']
-            elif jugdment_year - birth_year <= 35:
-                return AGE_GROUPS['<=35']
-            elif jugdment_year - birth_year <= 65:
-                return AGE_GROUPS['<=65']
-            else:
-                return AGE_GROUPS['>65']
-
         data = []
-        for subset in ['train', 'val', 'test']:
-            with open(os.path.join(data_dir, f'{subset}.jsonl')) as fh:
-                for line in fh:
-                    example = json.loads(line)
-                    example.pop('silver_rationales', None)
-                    example.pop('gold_rationales', None)
-                    example.pop('court_assessment_references', None)
-                    example['labels'] = [1 if article in example['violated_articles'] else 0 for article in
-                                         ECHR_ARTICLES]
-                    # example['labels'][0] = 1 if len(example['labels']) == 0 else 0
-
-                    example['defendant'] = 0 if len(set(example['defendants']).
-                                                    intersection(EAST_EUROPEAN_COUNTRIES)) else 1
-                    example['gender'] = GENDERS[example['applicant_gender']]
-                    example['age'] = age_group(example['applicant_birth_year'], int(example['judgment_date'][:4]))
-                    example['text'] = ' </s> '.join(example['facts'])
-                    example['data_type'] = subset
-                    example.pop('facts', None)
-                    example.pop('applicants', None)
-                    example.pop('defendants', None)
-                    data.append(example)
+        with open(os.path.join(data_dir, f'spc.jsonl')) as fh:
+            for line in fh:
+                example = json.loads(line)
+                example['text'] = ' </s> '.join(example['text'])
+                example['label'] = CRIMES[example['crime']]
+                example['gender'] = GENDERS[example['gender']]
+                example['region'] = REGIONS[example['region']]
+                example['data_type'] = example['data_type']
+                data.append(example)
         df = pd.DataFrame(data)
         df = df.fillna("")
         return df

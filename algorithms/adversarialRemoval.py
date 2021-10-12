@@ -5,6 +5,7 @@ from scheduler import initialize_scheduler
 from optimizer import initialize_optimizer
 from torch.nn.utils import clip_grad_norm_
 from pytorch_revgrad import RevGrad
+from configs.supported import losses
 
 
 class AdversarialRemoval(SingleModelAlgorithm):
@@ -30,7 +31,7 @@ class AdversarialRemoval(SingleModelAlgorithm):
         featurizer = featurizer.to(config.device)
         classifier = classifier.to(config.device)
         # extra modules for adversarial classifier
-        adv_classifier = torch.nn.Linear(featurizer.d_out, grouper.n_groups if grouper.n_groups > 2 else 1)
+        adv_classifier = torch.nn.Linear(featurizer.d_out, grouper.n_groups)
         rev_grad = RevGrad(alpha=config.adv_lambda)
         adv_classifier = adv_classifier.to(config.device)
         rev_grad = rev_grad.to(config.device)
@@ -57,6 +58,7 @@ class AdversarialRemoval(SingleModelAlgorithm):
 
         # initialize adversarial model, optimizer, and scheduler
         self.adv_model = torch.nn.Sequential(featurizer, rev_grad, adv_classifier).to(config.device)
+        self.adv_loss = losses['cross_entropy']
         self.module_list = torch.nn.ModuleList([featurizer, classifier, adv_classifier])
         self.optimizer = initialize_optimizer(config, self.module_list)
         self.scheduler = initialize_scheduler(config, self.optimizer, n_train_steps)
@@ -87,9 +89,20 @@ class AdversarialRemoval(SingleModelAlgorithm):
         return results
 
     def objective(self, results):
-
+        # print(results['y_pred'])
+        # print(results['y_pred'].shape)
+        # print('-'*50)
+        # print(results['y_true'])
+        # print(results['y_true'].shape)
+        # print('-' * 50)
+        # print(results['adv_y_pred'])
+        # print(results['adv_y_pred'].shape)
+        # print('-' * 50)
+        # print(results['g'])
+        # print(results['g'].shape)
+        # print('-' * 50)
         avg_loss = self.loss.compute(results['y_pred'], results['y_true'], return_dict=False)
-        adv_loss = self.loss.compute(results['adv_y_pred'], results['g'].unsqueeze(1), return_dict=False)
+        adv_loss = self.adv_loss.compute(results['adv_y_pred'], results['g'], return_dict=False)
 
         return avg_loss,  adv_loss
 

@@ -1,10 +1,10 @@
-MODEL_NAME='mini-longformer'
-DATASET='ecthr'
-BATCH_SIZE=2
-CUDA_VISIBLE_DEVICES=4,5,6,7 python /home/iliasc/fairlex-wilds/data/models/run_mlm.py \
+MODEL_NAME='mini-xlm-roberta'
+DATASET='spc'
+BATCH_SIZE=8
+CUDA_VISIBLE_DEVICES=7,6,5,4 python /home/iliasc/fairlex-wilds/data/models/run_mlm_standard.py \
     --model_name_or_path /home/iliasc/fairlex-wilds/data/models/${MODEL_NAME} \
     --train_file /home/iliasc/fairlex-wilds/data/datasets/${DATASET}_v1.0/${DATASET}_dump.txt \
-    --max_seq_length 4096  \
+    --max_seq_length 128  \
     --line_by_line true \
     --do_train true \
     --do_eval true  \
@@ -18,13 +18,13 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 python /home/iliasc/fairlex-wilds/data/models/run_m
     --per_device_eval_batch_size ${BATCH_SIZE} \
     --adam_eps 1e-6 \
     --weight_decay 0.01 \
-    --warmup_steps 4000 \
+    --warmup_steps 24000 \
     --fp16 true \
-    --output_dir /home/iliasc/fairlex-wilds/data/models/${DATASET}-${MODEL_NAME}-v3 \
+    --output_dir /home/iliasc/fairlex-wilds/data/models/${DATASET}-${MODEL_NAME} \
     --gradient_accumulation_steps 2 \
     --eval_accumulation_steps 2 \
     --logging_strategy steps \
-    --logging_steps=100 \
-    --eval_steps=1000 \
+    --logging_steps=500 \
+    --eval_steps=5000 \
     --save_strategy steps \
-    --save_steps=1000
+    --save_steps=5000
