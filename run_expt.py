@@ -187,7 +187,6 @@ def main():
     train_grouper = CombinatorialGrouper(
         dataset=full_dataset,
         groupby_fields=config.groupby_fields)
-
     datasets = defaultdict(dict)
     for split in full_dataset.split_dict.keys():
         if split == 'train':

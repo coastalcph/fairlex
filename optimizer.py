@@ -29,7 +29,7 @@ def initialize_optimizer(config, model):
         params = filter(lambda p: p.requires_grad, model.parameters())
         optimizer = Adam(
             params,
-            lr=config.lr,
+           lr=config.lr,
             weight_decay=config.weight_decay,
             **config.optimizer_kwargs)
     else:

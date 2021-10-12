@@ -149,3 +149,4 @@ logs_final_lr_3e-6/
 logs_final_*
 .vscode/
 .vscode/
+scotus.hier-bert.train_predictions.txt

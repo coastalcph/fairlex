@@ -67,7 +67,7 @@ process_outputs_functions = {
 
 # see initialize_*() functions for correspondence
 transforms = ['bert', 'hier-bert', 'tfidf']
-models = ['mini-longformer', 'mini-xlm-longformer', 'ecthr-mini-longformer-v2', 'fscs-mini-xlm-longformer', 'scotus-mini-longformer', 'regressor', 'mini-roberta', 'scotus-mini-hier-bert']
+models = ['mini-longformer', 'mini-xlm-longformer', 'ecthr-mini-longformer-v2', 'fscs-mini-xlm-longformer', 'scotus-mini-longformer', 'regressor', 'mini-roberta', 'scotus-mini-roberta']
 algorithms = ['ERM', 'groupDRO', 'deepCORAL', 'IRM', 'adversarialRemoval', 'minMax', 'REx']
 optimizers = ['SGD', 'Adam', 'AdamW']
 schedulers = ['linear_schedule_with_warmup', 'ReduceLROnPlateau', 'StepLR']

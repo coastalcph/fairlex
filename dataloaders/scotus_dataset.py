@@ -41,7 +41,7 @@ class ScotusDataset(WILDSDataset):
         self._dataset_name = "scotus"
         self._version = version
         self.label2idx = ISSUE_AREA_MAPPING
-        self._metadata_fields = ['decisionDirection', 'respondent']
+        self._metadata_fields = group_by_fields#['decisionDirection', 'respondent']
 
         self._y_size = len(self.label2idx)
         self._n_classes = len(self.label2idx)
@@ -70,6 +70,8 @@ class ScotusDataset(WILDSDataset):
         for split in self._split_dict:
             split_indices = self.data_df["data_type"] == self._split_names[split]
             self.data_df.loc[split_indices, "data_type"] = self._split_dict[split]
+
+        df = self.data_df
         self._split_array = self.data_df["data_type"].values
 
         # Extract metadata
@@ -114,7 +116,7 @@ class ScotusDataset(WILDSDataset):
 
         data = train_data + dev_data + test_data
         attribute2value2idx = dict()
-        if 'respondent' in self.group_by_fields:
+        if 'respondent' in self._metadata_fields:
             data = self.map_respondent(data)
         for example in data:
             for a in self._metadata_fields:
@@ -134,7 +136,7 @@ class ScotusDataset(WILDSDataset):
 
 
         for example in data:
-            for a in self._metadata_fields:
+            for a in self.group_by_fields:
                 str_val = example[a]
                 idx_val = attribute2value2idx[a][example[a]]
                 example[a] = idx_val
@@ -206,7 +208,30 @@ class ScotusDataset(WILDSDataset):
                 predictions.append(pred)
         predictions = np.stack(predictions, 0)
         return np.argmax(predictions, -1)
+    @staticmethod
+    def load_raw_dataset(path):
+        seen = set()
+        data = []
+        with jsonlines.open(path) as lines:
+            for line_data in lines:
+                example = dict(line_data)
+                if example['attributes']['caseId'] in seen:
+                    continue
+                seen.add(example['attributes']['caseId'])
+                data.append(example)
+        return data
 
+    @staticmethod
+    def dump_distilled_dataset(data_dire, logdir:str, seed:int, outdir:str):
+        train_data, dev_data, test_data = [], []
+        seen = set()
+        train_data = load_raw_dataset(os.path.join(data_dir, "scotus.train.jsonl"))
+        dev_data = load_raw_dataset(os.path.join(data_dir, "scotus.dev.jsonl"))
+        test_data = load_raw_dataset(os.path.join(data_dir, "scotus.test.jsonl"))
+        
+
+        val_pred = ScotusDataset.__load_predictions(os.path.join(logdir, f'scotus_split:val_seed:{seed}_epoch:best_pred.csv'))
+        test_pred = ScotusDataset.__load_predictions(os.path.join(logdir, f'scotus_split:test_seed:{seed}_epoch:best_pred.csv'))
     @staticmethod
     def dump_error_dataset(data_dir, logdir:str, seed:int, outdir:str, attribute_filter:tuple=None):
         dev_data, test_data = [], []

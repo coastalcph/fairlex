@@ -52,9 +52,10 @@ if __name__=='__main__':
     parser.add_argument('--biased_model_path', required=True, type=str)
     parser.add_argument('--original_model_path', required=True, type=str)
     parser.add_argument('--tokenizer_path', required=True, type=str)
+    parser.add_argument('--latex', default=False)
     args = parser.parse_args()
 
-
+    latex = args.latex
     with open(args.tokenizer_path, 'rb') as lines:
         vectorizer = pkl.load(lines)
     label_map = ISSUE_AREAS
@@ -82,4 +83,7 @@ if __name__=='__main__':
             d['peculiar'].append(t)
             d['peculiar_scores'].append(f"{s:.02f}")
         df = pd.DataFrame(data=d)
-        print(df.to_latex(index=False))
+        if latex:
+            print(df.to_latex(index=False))
+        else:
+            print(tabulate(df, headers='keys', tablefmt='psql'))

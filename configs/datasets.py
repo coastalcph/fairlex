@@ -55,7 +55,7 @@ dataset_defaults = {
     },
     'scotus': {
         'split_scheme': 'official',
-        'model': 'mini-roberta',
+        'model': 'scotus-mini-roberta',
         # 'train_transform': 'hier-bert',#'longformer',
         # 'eval_transform': 'hier-bert', #'longformer',
         'max_token_length': 4096,

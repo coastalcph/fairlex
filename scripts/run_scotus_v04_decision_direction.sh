@@ -2,10 +2,10 @@
 # normal cpu stuff: allocate cpus, memory
 #SBATCH --ntasks=1 --cpus-per-task=1 --mem=8000M
 # we run on the gpu partition
-#SBATCH -p gpu --gres=gpu:titanrtx:1
+#SBATCH -p gpu --gres=gpu:a100:1
 #Note that a program will be killed once it exceeds this time!
 #SBATCH --time=24:00:00
-#SBATCH -o logs/scotus_v04/scotus_issue_area_%A-%a.log
+#SBATCH -o logs/scotus_v04/scotus_mini_roberta_%A-%a.log
 #SBATCH --array=1-5
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate fairlex 
@@ -44,14 +44,14 @@ do
     COMMAND="run_expt.py --dataset scotus \
     --algorithm $ALGO $PARAM \
     --root_dir data/datasets \
-    --log_dir logs_final/scotus/$ALGO/$ATTRIBUTE/seed_$RAND_NUM/ \
+    --log_dir logs_final_mini_roberta/scotus/$ALGO/$ATTRIBUTE/seed_$RAND_NUM/ \
     --split_scheme official \
     --seed $RAND_NUM \
     --groupby_fields $ATTRIBUTE \
     --lr 1e-5 \
-    --train_transform bert \
-    --eval_transform bert \
-    --model scotus-mini-longformer \
+    --train_transform hier-bert \
+    --eval_transform hier-bert \
+    --model scotus-mini-roberta \
     --save_best \
     --fp16 True \
     --n_groups_per_batch 2 \

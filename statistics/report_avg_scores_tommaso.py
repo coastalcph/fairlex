@@ -18,6 +18,7 @@ def compute(dataset, log_dir):
     group_fields = GROUP_FIELDS_BY_DATASET[dataset]
     for group_field, (first_group, no_groups) in group_fields.items():
         if not os.path.exists(f'{log_dir}/{dataset}/ERM/{group_field}'):
+            print('skipping', f'{log_dir}/{dataset}/ERM/{group_field}')
             continue
         print('-' * 150)
         print(f'{group_field.upper()} ({no_groups} GROUPS)')
@@ -65,7 +66,7 @@ def compute(dataset, log_dir):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('--dataset', choices=['scotus', 'ecthr', 'fscs'])
+    parser.add_argument('--dataset', choices=['scotus', 'ecthr', 'fscs'], required=True)
     parser.add_argument('--log_dir', type=str, required=True)
     args = parser.parse_args()
     compute(args.dataset, args.log_dir)

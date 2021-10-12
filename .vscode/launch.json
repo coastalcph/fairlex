@@ -19,12 +19,13 @@
             "program": "run_expt.py",
             "args": ["--dataset", "scotus", "--algorithm", "ERM",
                     "--root_dir", "data/datasets/",
-                    "--log_dir", "logs2/scotus/respondent/erm", "--save_best", 
+                    "--log_dir", "logs2/scotus/respondent/erm", 
+                    "--save_best", 
                     "--seed", "1", 
                     "--split_scheme", "official", 
                     "--groupby_fields", "respondent",
                     "--progress_bar", 
-                    "--model", "scotus-mini-hier-bert", 
+                    "--model", "scotus-mini-roberta", 
                     "--train_transform", "hier-bert", 
                     "--eval_transform", "hier-bert", 
                     "--lr", "1e-5",
@@ -43,6 +44,15 @@
                 "--ngram_max", "3",
                 "--lowercase",
                 "--max_features", "10000"],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "report_avg_scores_tommaso",
+            "type": "python",
+            "request": "launch",
+            "program": "statistics/report_avg_scores_tommaso.py",
+            "args": ["--dataset", "scotus", "--log_dir", "logs_final_mini_roberta_scotus"],
             "console": "integratedTerminal",
             "justMyCode": false
         }
