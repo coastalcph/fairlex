@@ -1,25 +1,24 @@
 import os
 import json
 import torch
-import re
 import pandas as pd
-from nltk import sent_tokenize
 from wilds.datasets.wilds_dataset import WILDSDataset
 from wilds.common.utils import map_to_id_array
 from wilds.common.metrics.all_metrics import F1, multiclass_logits_to_pred
 from wilds.common.grouper import CombinatorialGrouper
 
-LEGAL_AREAS = {'other': 0, 'public law': 1, 'penal law': 2, 'civil law': 3, 'social law': 4, 'insurance law': 5}
-REGIONS = {'n/a': 0, 'Région lémanique': 1, 'Zürich': 2, 'Espace Mittelland': 3, 'Northwestern Switzerland': 4,
-           'Eastern Switzerland': 5, 'Central Switzerland': 6, 'Ticino': 7, 'Federation': 8}
-LANGUAGES = {'de': 0, 'fr': 1, 'it': 2}
-ISO2LANGUAGE = {'de': 'german', 'fr': 'french', 'it': 'italian'}
+REGIONS = {'Beijing': 0, 'Liaoning': 1, 'Hunan': 2, 'Guangdong': 3, 'Sichuan': 4, 'Guangxi': 5, 'Zhejiang': 6}
+GENDERS = {'M': 0, 'F': 1}
+CRIMES = {'None': 0, 'IntentionalInjury': 1, 'Theft': 2, 'TrafficCrime': 3,
+          'DrugTrans': 4, 'Fraud': 5, 'ProvokeTrouble': 6}
+TERMS = {'0 months': 0, '<=6 months': 1, '<=9 months': 2, '<=12 months': 3, '<=24 months': 4,
+         '<=36 months': 5, '<=60 months': 6, '<=84 months': 7, '<=120 months': 8, '>120 months': 9}
 
 
-class FSCSDataset(WILDSDataset):
+class SPCDataset(WILDSDataset):
     """
-    FSCS dataset.
-    This is a modified version of the 2021 FSCS dataset.
+    SPC dataset.
+    This is a modified version of the 2021 SPC dataset.
 
     Supported `split_scheme`:
         'official': official split
@@ -36,7 +35,7 @@ class FSCSDataset(WILDSDataset):
     Website:
         https://nijianmo.github.io/amazon/index.html
     """
-    _dataset_name = 'fscs'
+    _dataset_name = 'spc'
     _versions_dict = {
         '1.0': {
             'download_url': 'http://archive.org/download/ECtHR-NAACL2021/dataset.zip',
@@ -45,13 +44,13 @@ class FSCSDataset(WILDSDataset):
     }
 
     def __init__(self, version=None, root_dir='data', download=False,
-                 split_scheme='official', group_by_fields='legal area', language='all'):
+                 split_scheme='official', group_by_fields='region'):
         self._version = version
         # the official split is the only split
         self._split_scheme = split_scheme
         self._y_type = 'long'
-        self._y_size = 2
-        self._n_classes = 2
+        self._y_size = 7
+        self._n_classes = 7
         # path
         self._data_dir = self.initialize_data_dir(root_dir, download)
         # Load data
@@ -107,15 +106,13 @@ class FSCSDataset(WILDSDataset):
 
     def load_metadata(self, data_df):
         # Get metadata
-        columns = ['legal_area', 'language', 'region', 'y']
-        metadata_fields = ['legal_area', 'language', 'region', 'y']
+        columns = ['gender', 'region']
+        metadata_fields = ['gender', 'region']
         metadata_df = data_df[columns].copy()
         metadata_df.columns = metadata_fields
         ordered_maps = {}
-        ordered_maps['legal_area'] = range(0, 6)
-        ordered_maps['language'] = range(0, 3)
-        ordered_maps['region'] = range(0, 9)
-        ordered_maps['y'] = range(0, 2)
+        ordered_maps['gender'] = range(0, 2)
+        ordered_maps['region'] = range(0, 7)
         metadata_map, metadata = map_to_id_array(metadata_df, ordered_maps)
         return metadata_fields, torch.from_numpy(metadata.astype('long')), metadata_map
 
@@ -129,24 +126,15 @@ class FSCSDataset(WILDSDataset):
 
     def read_jsonl(self, data_dir):
         data = []
-        for split in ['train', 'val', 'test']:
-            with open(os.path.join(data_dir, f'{split}.jsonl')) as fh:
-                for line in fh:
-                    example = json.loads(line)
-                    sentences = []
-                    for sent in sent_tokenize(example['text'], language=ISO2LANGUAGE[example['language']]):
-                        if (len(sent) <= 50 or re.match('[0-9]', sent)) and len(sentences):
-                            sentences[-1] += ' ' + sent
-                        else:
-                            sentences.append(sent)
-                    example['text'] = ' </s> '.join(sentences)
-                    example['label'] = 1 if example['label'] == 'approval' else 0
-                    example['y'] = 1 if example['label'] == 'approval' else 0
-                    example['language'] = LANGUAGES[example['language']]
-                    example['legal_area'] = LEGAL_AREAS[example['legal area']]
-                    example['region'] = REGIONS[example['region']]
-                    example['data_type'] = split
-                    data.append(example)
+        with open(os.path.join(data_dir, f'spc.jsonl')) as fh:
+            for line in fh:
+                example = json.loads(line)
+                example['text'] = ' </s> '.join(example['text'])
+                example['label'] = CRIMES[example['crime']]
+                example['gender'] = GENDERS[example['gender']]
+                example['region'] = REGIONS[example['region']]
+                example['data_type'] = example['data_type']
+                data.append(example)
         df = pd.DataFrame(data)
         df = df.fillna("")
         return df

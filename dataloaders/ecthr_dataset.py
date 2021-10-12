@@ -12,7 +12,8 @@ EAST_EUROPEAN_COUNTRIES = {'RUSSIA', 'TURKEY', 'UKRAINE', 'POLAND', 'BULGARIA', 
                            'CZECH REPUBLIC', 'GEORGIA', 'ESTONIA', 'BOSNIA & HERZEGOVINA', 'NORTH MACEDONIA',
                            'FORMER YUGOSLAV MACEDONIA', 'ARMENIA', 'LATVIA', 'MONTENEGRO'}
 
-ECHR_ARTICLES = {"0": "No Violation",
+ECHR_ARTICLES = {
+                 # "0": "No Violation",
                  "2": "Right to life",
                  "3": "Prohibition of torture",
                  "5": "Right to liberty and security",
@@ -160,7 +161,7 @@ class ECtHRDataset(WILDSDataset):
                     example.pop('court_assessment_references', None)
                     example['labels'] = [1 if article in example['violated_articles'] else 0 for article in
                                          ECHR_ARTICLES]
-                    example['labels'][0] = 1 if len(example['labels']) == 0 else 0
+                    # example['labels'][0] = 1 if len(example['labels']) == 0 else 0
 
                     example['defendant'] = 0 if len(set(example['defendants']).
                                                     intersection(EAST_EUROPEAN_COUNTRIES)) else 1

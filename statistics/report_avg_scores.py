@@ -4,11 +4,14 @@ import numpy as np
 from sklearn.metrics import f1_score
 from scipy.special import expit
 import os
-# DATASET = 'ecthr'
-DATASET = 'fscs'
-# GROUP_FIELDS = {'gender': (1, 3), 'age': (1, 4), 'defendant': (0, 2)}
-GROUP_FIELDS = {'language': (0, 3), 'region': (1, 9), 'legal_area': (1, 6)}
-LOG_DIR = 'linear_logs/batch_12'  # 'linear_logs/batch_12'
+DATASET = 'ecthr'
+# DATASET = 'fscs'
+# DATASET = 'spc'
+GROUP_FIELDS = {'gender': (1, 3), 'age': (1, 4), 'defendant': (0, 2)}
+# GROUP_FIELDS = {'language': (0, 3), 'region': (1, 9), 'legal_area': (1, 6)}
+# GROUP_FIELDS = {'gender': (0, 2), 'region': (0, 7)}
+
+LOG_DIR = 'hier_final_logs'  # 'linear_logs/batch_12'
 
 for group_field, (first_group, no_groups) in GROUP_FIELDS.items():
     if not os.path.exists(f'{LOG_DIR}/{DATASET}/ERM/{group_field}'):
@@ -17,7 +20,7 @@ for group_field, (first_group, no_groups) in GROUP_FIELDS.items():
     print(f'{group_field.upper()} ({no_groups} GROUPS)')
     print('-' * 150)
     # dataset = get_dataset(DATASET, group_by_fields=[group_field], root_dir='../data/datasets')
-    for algorithm in ['ERM', 'ERM-GS', 'IRM', 'groupDRO', 'REx']:
+    for algorithm in ['ERM', 'ERM-GS', 'adversarialRemoval', 'IRM', 'groupDRO', 'REx']:
         if not os.path.exists(f'{LOG_DIR}/{DATASET}/{algorithm}/{group_field}'):
             continue
 
@@ -38,7 +41,7 @@ for group_field, (first_group, no_groups) in GROUP_FIELDS.items():
         #     scores['test'].update({f'Micro-F1 ({group_no + 1})': []})
 
         try:
-            for seed_no in range(1, 5):
+            for seed_no in range(1, 3):
                 try:
                     for split in ['val', 'test']:
                         # ORIGINAL SCORES

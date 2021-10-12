@@ -26,6 +26,10 @@ class F1(Metric):
     def _compute(self, y_pred, y_true):
         if self.prediction_fn is not None:
             y_pred = self.prediction_fn(y_pred)
+        if len(y_true.size()) != 1:
+            # Consider no labels as an independent label (class)
+            y_true = torch.cat([y_true, (torch.sum(y_true, -1) == 0).long().unsqueeze(-1)], -1)
+            y_pred = torch.cat([y_pred, (torch.sum(y_pred, -1) == 0).long().unsqueeze(-1)], -1)
         score = sklearn.metrics.f1_score(y_true, y_pred, average=self.average, zero_division=0)
         return torch.tensor(score)
 
@@ -48,6 +52,8 @@ class F1Custom(F1):
 losses = {
     'cross_entropy': ElementwiseLoss(loss_fn=nn.CrossEntropyLoss(reduction='none')),
     'binary_cross_entropy': MultiTaskLoss(loss_fn=nn.BCEWithLogitsLoss(reduction='none')),
+    'multi_class_hinge': ElementwiseLoss(loss_fn=nn.MultiMarginLoss(reduction='none')),
+    'multi_label_hinge': MultiTaskLoss(loss_fn=nn.MultiLabelMarginLoss(reduction='none')),
 }
 
 algo_log_metrics = {
@@ -66,11 +72,14 @@ process_outputs_functions = {
 }
 
 # see initialize_*() functions for correspondence
-transforms = ['bert', 'hier-bert', 'tfidf']
-models = ['mini-longformer', 'mini-xlm-longformer', 'ecthr-mini-longformer-v2', 'fscs-mini-xlm-longformer', 'scotus-mini-longformer', 'regressor', 'mini-roberta', 'scotus-mini-roberta']
+transforms = ['bert', 'hier-bert', 'tf-idf']
+models = ['mini-longformer', 'mini-xlm-longformer', 'ecthr-mini-longformer-v2',
+          'fscs-mini-xlm-longformer', 'mini-roberta', 'bert-base-uncased',
+          'ecthr-mini-roberta', 'fscs-mini-xlm-roberta', 'spc-mini-xlm-roberta', 'spc-mini-xlm-roberta-v1',
+          'logistic_regression', 'scotus-mini-roberta']
 algorithms = ['ERM', 'groupDRO', 'deepCORAL', 'IRM', 'adversarialRemoval', 'minMax', 'REx']
 optimizers = ['SGD', 'Adam', 'AdamW']
 schedulers = ['linear_schedule_with_warmup', 'ReduceLROnPlateau', 'StepLR']
 
 # supported datasets
-supported_datasets = ['ecthr', 'scotus', 'fscs']
+supported_datasets = ['ecthr', 'scotus', 'fscs', 'spc']
