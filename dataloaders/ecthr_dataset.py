@@ -1,6 +1,7 @@
 import os
 import json
 import torch
+import jsonlines
 import pandas as pd
 from wilds.datasets.wilds_dataset import WILDSDataset
 from wilds.common.utils import map_to_id_array
@@ -140,16 +141,17 @@ class ECtHRDataset(WILDSDataset):
         else:
             raise ValueError(f'Split scheme {self.split_scheme} not recognized')
 
+    @staticmethod
+    def age_group(birth_year, jugdment_year):
+        if birth_year == 'n/a':
+            return AGE_GROUPS['n/a']
+        elif jugdment_year - birth_year <= 35:
+            return AGE_GROUPS['<=35']
+        elif jugdment_year - birth_year <= 65:
+            return AGE_GROUPS['<=65']
+        else:
+            return AGE_GROUPS['>65']
     def read_jsonl(self, data_dir):
-        def age_group(birth_year, jugdment_year):
-            if birth_year == 'n/a':
-                return AGE_GROUPS['n/a']
-            elif jugdment_year - birth_year <= 35:
-                return AGE_GROUPS['<=35']
-            elif jugdment_year - birth_year <= 65:
-                return AGE_GROUPS['<=65']
-            else:
-                return AGE_GROUPS['>65']
 
         data = []
         for subset in ['train', 'val', 'test']:
@@ -166,7 +168,7 @@ class ECtHRDataset(WILDSDataset):
                     example['defendant'] = 0 if len(set(example['defendants']).
                                                     intersection(EAST_EUROPEAN_COUNTRIES)) else 1
                     example['gender'] = GENDERS[example['applicant_gender']]
-                    example['age'] = age_group(example['applicant_birth_year'], int(example['judgment_date'][:4]))
+                    example['age'] = ECtHRDataset.age_group(example['applicant_birth_year'], int(example['judgment_date'][:4]))
                     example['text'] = ' </s> '.join(example['facts'])
                     example['data_type'] = subset
                     example.pop('facts', None)
@@ -176,6 +178,15 @@ class ECtHRDataset(WILDSDataset):
         df = pd.DataFrame(data)
         df = df.fillna("")
         return df
+
+    @staticmethod
+    def load_raw_dataset(path):
+        subset = 'train' if 'train' in path else 'val' if 'val' in path else 'test' 
+        examples = list()
+        with jsonlines.open(path) as data:
+            for example in data:
+                examples.append(example)
+        return examples
 
 if __name__ == '__main__':
     ECtHRDataset()

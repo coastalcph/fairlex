@@ -5,12 +5,12 @@
 #SBATCH -p gpu --gres=gpu:titanx:1
 #Note that a program will be killed once it exceeds this time!
 #SBATCH --time=24:00:00
-#SBATCH -o logs/ecthr_v10/ecthr_age__tfidf_regressor_respondent_hier-bert-distilled.log
+#SBATCH -o logs/ecthr_v1/ecthr_tfidf_regressor_distilled_age.log
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate fairlex 
 
 PARAM=""
-ATTRIBUTE=respondent
+ATTRIBUTE=age
 ALGO=ERM
 
 nvidia-smi
@@ -21,22 +21,20 @@ for RAND_NUM in 1 2 3 4 5
 do
     echo 'ALGO='$ALGO
     echo 'RAND_NUM='$RAND_NUM
-    COMMAND="run_expt.py \
-    --dataset scotus \
-    --algorithm $ALGO $PARAM \
-    --root_dir data/datasets/scotus_v04_hier-bert-distillation \
-    --log_dir logs_final_tfidf_regressor_hier-bert-distillation/scotus/$ALGO/$ATTRIBUTE/seed_$RAND_NUM/ \
-    --split_scheme official \
+    COMMAND="run_expt.py --dataset ecthr --algorithm $ALGO $PARAM --root_dir data/datasets \
+    --log_dir logs_final_tfidf_regressor_hier-bert-distillation/ecthr/$ALGO/$ATTRIBUTE/seed_$RAND_NUM/ --split_scheme official \
+    --root_dir data/datasets/ecthr_v1.0_hier-bert-distillation/
+    --groupby_fields=$ATTRIBUTE \
     --seed $RAND_NUM \
     --groupby_fields $ATTRIBUTE \
     --save_best \
     --lr 3e-3 \
     --batch_size 12 \
-    --n_groups_per_batch 4 \
+    --n_groups_per_batch 3 \
     --model regressor \
     --train_transform tfidf \
     --eval_transform tfidf \
-    --model_kwargs tfidf_vectorizer_path=/home/npf290/dev/fairlex-wilds/data/datasets/scotus_v0.4/tfidf_tokenizer_3grams_10000.pkl"
+    --model_kwargs tfidf_vectorizer_path=/home/npf290/dev/fairlex-wilds/data/datasets/ecthr_v1.0/tfidf_tokenizer_3grams_10000.pkl"
     echo ''
     echo $COMMAND
     PYTHONPATH=src python $COMMAND 

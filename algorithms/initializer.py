@@ -37,7 +37,7 @@ def initialize_algorithm(config, datasets, train_grouper):
     loss = losses[config.loss_function]
     metric = algo_log_metrics[config.algo_log_metric]
 
-    if config.algorithm == 'ERM':
+    if config.algorithm == 'ERM' or config.algorithm == 'ERM_standard':
         algorithm = ERM(
             config=config,
             d_out=d_out,

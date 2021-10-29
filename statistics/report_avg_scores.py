@@ -11,7 +11,7 @@ GROUP_FIELDS = {'gender': (1, 3), 'age': (1, 4), 'defendant': (0, 2)}
 # GROUP_FIELDS = {'language': (0, 3), 'region': (1, 9), 'legal_area': (1, 6)}
 # GROUP_FIELDS = {'gender': (0, 2), 'region': (0, 7)}
 
-LOG_DIR = 'hier_final_logs'  # 'linear_logs/batch_12'
+LOG_DIR = 'logs_final_mini_roberta'  # 'linear_logs/batch_12'
 
 for group_field, (first_group, no_groups) in GROUP_FIELDS.items():
     if not os.path.exists(f'{LOG_DIR}/{DATASET}/ERM/{group_field}'):

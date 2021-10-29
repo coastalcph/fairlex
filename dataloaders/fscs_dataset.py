@@ -44,7 +44,7 @@ class FSCSDataset(WILDSDataset):
         },
     }
 
-    def __init__(self, version=None, root_dir='data', download=False,
+    def __init__(self, version=None, root_dir='data/datasets', download=False,
                  split_scheme='official', group_by_fields='legal area', language='all'):
         self._version = version
         # the official split is the only split

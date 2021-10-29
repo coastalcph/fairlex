@@ -89,8 +89,7 @@ def get_peculiars_all(word_scores_list):
             #peculiars[j] = peculiars[j] - l_peculiars if len(peculiars[j]) > 0 else ll_peculiars
     return [peculiars[i] for i in range(len(peculiars))]
 
-attribute_dicts = {'gender':["0", "1", "2"], 'respondent':['person',
-'public_entity', 'organization', 'facility', 'other'], 'decisionDirection':['liberal','conservative'], 'age':['0', '1', '2', '3']}
+attribute_dicts = {'gender':["0", "1", "2"], 'respondent':['person','public_entity', 'organization', 'facility', 'other'], 'decisionDirection':['liberal','conservative'], 'age':['0', '1', '2', '3'], 'defendant':["0", "1"]}
 dataset_versions = {'ecthr':'1.0', 'scotus':'0.4'}
 if __name__ == '__main__':
     parser = ArgumentParser()

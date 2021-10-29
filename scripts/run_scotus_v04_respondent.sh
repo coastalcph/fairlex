@@ -6,7 +6,7 @@
 #Note that a program will be killed once it exceeds this time!
 #SBATCH --time=24:00:00
 #SBATCH -o logs/scotus_v04/scotus_mini_roberta_%A-%a.log
-#SBATCH --array=1-5
+#SBATCH --array=6-6
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate fairlex 
 
@@ -31,6 +31,10 @@ fi
 if [[ $SLURM_ARRAY_TASK_ID == 5 ]];
 then
     ALGO=REx
+fi
+if [[ $SLURM_ARRAY_TASK_ID == 6 ]];
+then
+    ALGO=ERM_standard
 fi
 
 nvidia-smi

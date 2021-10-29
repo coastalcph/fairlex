@@ -33,7 +33,7 @@ do
     --model regressor \
     --train_transform tfidf \
     --eval_transform tfidf \
-    --model_kwargs tfidf_vectorizer_path=/home/npf290/dev/fairlex-wilds/data/datasets/ecthr_v1.0/tfidf_tokenizer.pkl"
+    --model_kwargs tfidf_vectorizer_path=/home/npf290/dev/fairlex-wilds/data/datasets/ecthr_v1.0/tfidf_tokenizer_3grams_10000.pkl"
     echo ''
     echo $COMMAND
     PYTHONPATH=src python $COMMAND 

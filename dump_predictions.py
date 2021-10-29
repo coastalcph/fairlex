@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import os
 import jsonlines
+from dataloaders.ecthr_dataset import ECtHRDataset
 from configs.utils import populate_defaults
 from dataloaders import get_dataset
 from transforms import initialize_transform
@@ -56,8 +57,9 @@ def dump_predictions(weights_path:str, dataset_name:str, out_path:str):
             writer.write('\n'.join(map(str, y_hat)) + '\n')
     print(count)
 
-def create_new_dataset(predictions_path, dataset_json_path, out_path):
-    data = ScotusDataset.load_raw_dataset(dataset_json_path)
+def create_new_dataset(dataset_cls, predictions_path, dataset_json_path, out_path):
+
+    data = dataset_cls.load_raw_dataset(dataset_json_path)
     lid2l = {str(v):str(k) for k, v in ISSUE_AREA_MAPPING.items()}
     print(lid2l)
     predictions = list()
@@ -69,8 +71,14 @@ def create_new_dataset(predictions_path, dataset_json_path, out_path):
     assert len(data) == len(predictions) or print(len(data), len(predictions))
     with jsonlines.open(out_path, 'w') as writer :
         for ex, (label, label_id) in zip(data, predictions):
-            ex['label'] = label
-            ex['label_id'] = label_id
+            if dataset_cls == ScotusDataset:
+                ex['label'] = label
+                ex['label_id'] = label_id
+            elif dataset_cls == ECtHRDataset:
+                ex['labels'] = [label]
+            else:
+                raise RuntimeError(f'{dataset_cls} not recognised')
+
             writer.write(ex)
 
 
@@ -82,7 +90,12 @@ if __name__ == '__main__':
     parser.add_argument('--dataset_name', choices=['scotus', 'ecthr'], required=True)
     parser.add_argument('--out_path', required=True)
     args = parser.parse_args()
-    dump_predictions(args.weights_path, args.dataset_name, args.out_path)
+    #dump_predictions(args.weights_path, args.dataset_name, args.out_path)
     dataset_version = '0.4' if args.dataset_name == 'scotus' else '1.0'
-    create_new_dataset(args.out_path, f'data/datasets/{args.dataset_name}_v{dataset_version}/{args.dataset_name}.train.jsonl', 
-                      '{args.dataset_name}_v{dataset_version}.hier-bert-answers.jsonl')
+    dataset_filename = (args.dataset_name if args.dataset_name == 'scotus.' else '') + 'train.jsonl'
+    if args.dataset_name == 'scotus':
+        dataset_cls = ScotusDataset
+    elif args.dataset_name == 'ecthr':
+        dataset_cls = ECtHRDataset 
+    create_new_dataset(dataset_cls, args.out_path, f'data/datasets/{args.dataset_name}_v{dataset_version}/{dataset_filename}',
+                      f'{args.dataset_name}_v{dataset_version}.hier-bert-answers.jsonl')

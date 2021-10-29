@@ -1,5 +1,5 @@
 from torch.utils.data._utils.collate import default_collate
-from dataloaders.scotus_attribute_mapping import ISSUE_AREA_MAPPING, KEYWORD_2_PETITIONER_NAME, PARTY_WINNING_MAPPING, PETITIONER_MAPPING, RESPONDENT_MAPPING, STATE_2_REGION_MAP
+from dataloaders.scotus_attribute_mapping import ISSUE_AREA_MAPPING, RESPONDENT_MAPPING 
 from configs.supported import F1Custom, binary_logits_to_pred_v2
 from typing import Counter, List, Tuple, Union
 from wilds.datasets.wilds_dataset import WILDSDataset

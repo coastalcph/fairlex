@@ -1,59 +1,20 @@
 import re
 
-PARTY_WINNING_MAPPING = {
-    "no favorable disposition for petitioning party apparent": 0,
-    "petitioning party received a favorable disposition": 1,
-}
 ISSUE_AREAS = "Criminal Procedure,Civil Rights,First Amendment,Due Process,Privacy,Attorneys,Unions,Economic Activity,Judicial Power,Federalism,Federal Taxation".split(
     ","
 )
 ISSUE_AREA_MAPPING = {k.lower().replace(" ", "_"): i for i, k in enumerate(ISSUE_AREAS)}
 
 # 'favorable disposition for petitioning party unclear': 2}
-LABEL_MAPPING = PARTY_WINNING_MAPPING
-US_REGION_MAP = {
-    "northeast": [
-        "connecticut",
-        "maine",
-        "massachusetts",
-        "new hampshire",
-        "rhode island",
-        "vermont",
-        "new jersey",
-        "new york",
-        "pennsylvania",
-    ],
-    "midwest": [
-        x.lower()
-        for x in "Illinois,Indiana,Michigan,Ohio,Wisconsin,West North Central,Iowa,Kansas,Minnesota,Missouri,Nebraska,North Dakota,South Dakota".split(
-            ","
-        )
-    ],
-    "south": [
-        x.lower()
-        for x in "Delaware,Florida,Georgia,Maryland,North Carolina,South Carolina,Virginia,District of Columbia,West Virginia,Alabama,Kentucky,Mississippi,Tennessee,Arkansas,Louisiana,Oklahoma,Texas".split(
-            ","
-        )
-    ],
-    "west": [
-        x.lower()
-        for x in "Arizona,Colorado,Idaho,Montana,Nevada,New Mexico,Utah,Wyoming,Alaska,California,Hawaii,Oregon,Washington".split(
-            ","
-        )
-    ],
-    "court of appeals": ["court of appeals"],
-    "district court": ["district court"],
-}
-STATE_2_REGION_MAP = {
-    state: region for region, states in US_REGION_MAP.items() for state in states
-}
-PETITIONER_MAPPING = {
-    "female": [re.compile(".*(female|wife|mother).*")],
-    "non_female": [re.compile("^((?!female).)*$")],
-}
-KEYWORD_2_PETITIONER_NAME = {
-    kw: name for name, keywords in PETITIONER_MAPPING.items() for kw in keywords
-}
+#LABEL_MAPPING = PARTY_WINNING_MAPPING
+
+#PETITIONER_MAPPING = {
+#    "female": [re.compile(".*(female|wife|mother).*")],
+#    "non_female": [re.compile("^((?!female).)*$")],
+#}
+#KEYWORD_2_PETITIONER_NAME = {
+#    kw: name for name, keywords in PETITIONER_MAPPING.items() for kw in keywords
+#}
 ## This is not ok, because female or other female-related terms appear only when the case
 ## is about discrimination. Therefore there are other generic terms (employer) that could still
 ## refer to females but which are impossible to detect.

@@ -5,6 +5,12 @@ algorithm_defaults = {
         'distinct_groups': True,
         'eval_loader': 'standard',
     },
+    'ERM_standard': {
+        'train_loader': 'standard',
+        'uniform_over_groups': True,
+        'distinct_groups': True,
+        'eval_loader': 'standard',
+    },
     'groupDRO': {
         'train_loader': 'standard',
         'uniform_over_groups': True,

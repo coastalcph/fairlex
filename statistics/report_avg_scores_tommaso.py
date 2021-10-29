@@ -24,7 +24,7 @@ def compute(dataset, log_dir):
         print(f'{group_field.upper()} ({no_groups} GROUPS)')
         print('-' * 150)
         # dataset = get_dataset(DATASET, group_by_fields=[group_field], root_dir='../data/datasets')
-        for algorithm in ['ERM', 'adversarialRemoval', 'groupDRO', 'IRM', 'REx']:
+        for algorithm in ['ERM_standard']: #['ERM', 'adversarialRemoval', 'groupDRO', 'IRM', 'REx']:
             if not os.path.exists(f'{log_dir}/{dataset}/{algorithm}/{group_field}'):
                 continue
 
@@ -38,7 +38,7 @@ def compute(dataset, log_dir):
 
 
             try:
-                for seed_no in range(1, 5):
+                for seed_no in range(1, 6):
                     try:
                         for split in ['val', 'test']:
                             # ORIGINAL SCORES
