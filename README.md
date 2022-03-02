@@ -31,12 +31,14 @@ We present a benchmark suite of four datasets for evaluating the fairness of pre
 
 ### Dataset Repository
 
-The dataset is available on [Hugging Face datasets](http://huggingface.co/datasets/fairlex) and you can easily load any dataset. For example for ECtHR dataset:
+The dataset is available on [Hugging Face datasets](https://huggingface.co/datasets/coastalcph/fairlex) and you can easily load any dataset. For example for ECtHR dataset:
 
 ```python
 from datasets import load_dataset
 
-dataset = load_dataset('fairlex', 'ecthr')
+dataset = load_dataset("coastalcph/fairlex", "ecthr")
+# you can use any of the following config names as a second argument:
+"ecthr", "scotus", "fscs", "cail"
 ```
 
 Note: You don't need to download or install any dataset manually, the code is doing that automatically.
