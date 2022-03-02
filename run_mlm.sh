@@ -1,9 +1,10 @@
-MODEL_NAME='mini-xlm-roberta'
-DATASET='spc'
+MODEL_NAME='fairlex-cail-minilm'
+DATASET='cail'
 BATCH_SIZE=8
-CUDA_VISIBLE_DEVICES=7,6,5,4 python /home/iliasc/fairlex-wilds/data/models/run_mlm_standard.py \
-    --model_name_or_path /home/iliasc/fairlex-wilds/data/models/${MODEL_NAME} \
-    --train_file /home/iliasc/fairlex-wilds/data/datasets/${DATASET}_v1.0/${DATASET}_dump.txt \
+
+python language_modelling/run_mlm.py \
+    --model_name_or_path microsoft/MiniLM-L12-H384-uncased \
+    --train_file data/datasets/${DATASET}_v1.0/${DATASET}_dump.txt \
     --max_seq_length 128  \
     --line_by_line true \
     --do_train true \

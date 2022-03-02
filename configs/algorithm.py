@@ -1,7 +1,7 @@
 algorithm_defaults = {
     'ERM': {
-        'train_loader': 'group',
-        'uniform_over_groups': True,
+        'train_loader': 'standard',
+        'uniform_over_groups': False,
         'distinct_groups': True,
         'eval_loader': 'standard',
     },

@@ -1,9 +1,6 @@
-import os
-import json
 import torch
-import re
 import pandas as pd
-from nltk import sent_tokenize
+from datasets import load_dataset
 from wilds.datasets.wilds_dataset import WILDSDataset
 from wilds.common.utils import map_to_id_array
 from wilds.common.metrics.all_metrics import F1, multiclass_logits_to_pred
@@ -19,43 +16,43 @@ ISO2LANGUAGE = {'de': 'german', 'fr': 'french', 'it': 'italian'}
 class FSCSDataset(WILDSDataset):
     """
     FSCS dataset.
-    This is a modified version of the 2021 FSCS dataset.
+    This is the 2021 FSCS dataset.
 
     Supported `split_scheme`:
         'official': official split
 
     Input (x):
-        Case facts of maximum token length of 4096.
+        Case facts of maximum token length of 2048.
 
     Label (y):
         y is 1 if appeal is approved, otherwise 0
 
     Metadata:
-        industry_sector: defendant Group
+        decision_language: The language of the FSCS written decision, (German, French, or Italian)
+        legal_area: The legal area of the case (public, penal, social, civil, or insurance law) derived from the chambers where the decisions were heard
+        court_region: The region that denotes in which federal region was the case originated
 
     Website:
-        https://nijianmo.github.io/amazon/index.html
+        https://github.com/coastalcph/fairlex
     """
     _dataset_name = 'fscs'
     _versions_dict = {
         '1.0': {
-            'download_url': 'http://archive.org/download/ECtHR-NAACL2021/dataset.zip',
+            'download_url': 'https://zenodo.org/record/6322643/files/fscs.zip',
             'compressed_size': 4_066_541_568
         },
     }
 
     def __init__(self, version=None, root_dir='data', download=False,
-                 split_scheme='official', group_by_fields='legal area', language='all'):
+                 split_scheme='official', group_by_fields='legal_area'):
         self._version = version
         # the official split is the only split
         self._split_scheme = split_scheme
         self._y_type = 'long'
         self._y_size = 2
         self._n_classes = 2
-        # path
-        self._data_dir = self.initialize_data_dir(root_dir, download)
         # Load data
-        self.data_df = self.read_jsonl(self.data_dir)
+        self.data_df = self.read_dataset()
         print(self.data_df.head())
 
         # Get arrays
@@ -107,14 +104,14 @@ class FSCSDataset(WILDSDataset):
 
     def load_metadata(self, data_df):
         # Get metadata
-        columns = ['legal_area', 'language', 'region', 'y']
-        metadata_fields = ['legal_area', 'language', 'region', 'y']
+        columns = ['legal_area', 'decision_language', 'court_region', 'y']
+        metadata_fields = ['legal_area', 'decision_language', 'court_region', 'y']
         metadata_df = data_df[columns].copy()
         metadata_df.columns = metadata_fields
         ordered_maps = {}
         ordered_maps['legal_area'] = range(0, 6)
-        ordered_maps['language'] = range(0, 3)
-        ordered_maps['region'] = range(0, 9)
+        ordered_maps['decision_language'] = range(0, 3)
+        ordered_maps['court_region'] = range(0, 9)
         ordered_maps['y'] = range(0, 2)
         metadata_map, metadata = map_to_id_array(metadata_df, ordered_maps)
         return metadata_fields, torch.from_numpy(metadata.astype('long')), metadata_map
@@ -127,26 +124,14 @@ class FSCSDataset(WILDSDataset):
         else:
             raise ValueError(f'Split scheme {self.split_scheme} not recognized')
 
-    def read_jsonl(self, data_dir):
+    def read_dataset(self):
         data = []
         for split in ['train', 'val', 'test']:
-            with open(os.path.join(data_dir, f'{split}.jsonl')) as fh:
-                for line in fh:
-                    example = json.loads(line)
-                    sentences = []
-                    for sent in sent_tokenize(example['text'], language=ISO2LANGUAGE[example['language']]):
-                        if (len(sent) <= 50 or re.match('[0-9]', sent)) and len(sentences):
-                            sentences[-1] += ' ' + sent
-                        else:
-                            sentences.append(sent)
-                    example['text'] = ' </s> '.join(sentences)
-                    example['label'] = 1 if example['label'] == 'approval' else 0
-                    example['y'] = 1 if example['label'] == 'approval' else 0
-                    example['language'] = LANGUAGES[example['language']]
-                    example['legal_area'] = LEGAL_AREAS[example['legal area']]
-                    example['region'] = REGIONS[example['region']]
-                    example['data_type'] = split
-                    data.append(example)
+            dataset = load_dataset('fairlex', 'fscs', split=split)
+            for example in dataset:
+                example['y'] = example['label']
+                example['data_type'] = split
+                data.append(example)
         df = pd.DataFrame(data)
         df = df.fillna("")
         return df

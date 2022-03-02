@@ -25,5 +25,5 @@ def get_dataset(dataset, version=None, **dataset_kwargs):
         from dataloaders.fscs_dataset import FSCSDataset
         return FSCSDataset(version=version, **dataset_kwargs)
     elif dataset == 'spc':
-        from dataloaders.spc_dataset import SPCDataset
+        from dataloaders.cail_dataset import SPCDataset
         return SPCDataset(version=version, **dataset_kwargs)

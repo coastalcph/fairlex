@@ -1,4 +1,4 @@
-from transformers import LongformerForSequenceClassification, LongformerModel, AutoModel
+from transformers import AutoModel
 import numpy as np
 import torch
 
@@ -12,42 +12,6 @@ def sinusoidal_init(num_embeddings: int, embedding_dim: int):
     position_enc[1:, 0::2] = np.sin(position_enc[1:, 0::2])  # dim 2i
     position_enc[1:, 1::2] = np.cos(position_enc[1:, 1::2])  # dim 2i+1
     return torch.from_numpy(position_enc).type(torch.FloatTensor)
-
-
-class LongformerClassifier(LongformerForSequenceClassification):
-    def __init__(self, config):
-        super().__init__(config)
-        self.d_out = config.num_labels
-
-    def __call__(self, x):
-        input_ids = x[:, :, 0]
-        attention_mask = x[:, :, 1]
-        global_attention_mask = x[:, :, 2]
-
-        outputs = super().__call__(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            global_attention_mask=global_attention_mask
-        )[0]
-        return outputs
-
-
-class LongformerFeaturizer(LongformerModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.d_out = config.hidden_size
-
-    def __call__(self, x):
-        input_ids = x[:, :, 0]
-        attention_mask = x[:, :, 1]
-        global_attention_mask = x[:, :, 2]
-
-        outputs = super().__call__(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            global_attention_mask=global_attention_mask
-        )[1]  # get pooled output
-        return outputs
 
 
 class HierBERTClassifier(torch.nn.Module):

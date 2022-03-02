@@ -15,10 +15,10 @@ TERMS = {'0 months': 0, '<=6 months': 1, '<=9 months': 2, '<=12 months': 3, '<=2
          '<=36 months': 5, '<=60 months': 6, '<=84 months': 7, '<=120 months': 8, '>120 months': 9}
 
 
-class SPCDataset(WILDSDataset):
+class CAILDataset(WILDSDataset):
     """
-    SPC dataset.
-    This is a modified version of the 2021 SPC dataset.
+    CAIL dataset.
+    This is a modified version of the 2021 CAIL dataset.
 
     Supported `split_scheme`:
         'official': official split
@@ -27,30 +27,31 @@ class SPCDataset(WILDSDataset):
         Case facts of maximum token length of 4096.
 
     Label (y):
-        y is 1 if appeal is approved, otherwise 0
+        y is the crime severity based on the ruled imprisonment term.
 
     Metadata:
-        industry_sector: defendant Group
+        defendant_gender: The gender of the defendant (Male or Female)
+        court_region: The region of the court that denotes in which out of the 7 provincial-level administrative regions was the case judged
 
     Website:
-        https://nijianmo.github.io/amazon/index.html
+        https://github.com/coastalcph/fairlex
     """
-    _dataset_name = 'spc'
+    _dataset_name = 'cail'
     _versions_dict = {
         '1.0': {
-            'download_url': 'http://archive.org/download/ECtHR-NAACL2021/dataset.zip',
+            'download_url': 'https://zenodo.org/record/6322643/files/ecthr.zip',
             'compressed_size': 4_066_541_568
         },
     }
 
     def __init__(self, version=None, root_dir='data', download=False,
-                 split_scheme='official', group_by_fields='region'):
+                 split_scheme='official', group_by_fields='defendant_gender'):
         self._version = version
         # the official split is the only split
         self._split_scheme = split_scheme
         self._y_type = 'long'
-        self._y_size = 7
-        self._n_classes = 7
+        self._y_size = 6
+        self._n_classes = 6
         # path
         self._data_dir = self.initialize_data_dir(root_dir, download)
         # Load data
@@ -125,12 +126,26 @@ class SPCDataset(WILDSDataset):
             raise ValueError(f'Split scheme {self.split_scheme} not recognized')
 
     def read_jsonl(self, data_dir):
+        def penalty_group(term):
+            if term == 0:
+                return 0
+            elif term <= 12:
+                return 1
+            elif term <= 36:
+                return 2
+            elif term <= 60:
+                return 3
+            elif term <= 120:
+                return 4
+            else:
+                return 5
         data = []
         with open(os.path.join(data_dir, f'spc.jsonl')) as fh:
             for line in fh:
                 example = json.loads(line)
                 example['text'] = ' </s> '.join(example['text'])
-                example['label'] = CRIMES[example['crime']]
+                example['label'] = penalty_group(int(example['term'])) # CRIMES[example['crime']]
+                example['y'] = example['label']
                 example['gender'] = GENDERS[example['gender']]
                 example['region'] = REGIONS[example['region']]
                 example['data_type'] = example['data_type']

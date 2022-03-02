@@ -3,36 +3,14 @@ import pandas as pd
 from datasets import load_dataset
 from wilds.datasets.wilds_dataset import WILDSDataset
 from wilds.common.utils import map_to_id_array
-from configs.supported import F1, binary_logits_to_pred_v2
+from wilds.common.metrics.all_metrics import F1, multiclass_logits_to_pred
 from wilds.common.grouper import CombinatorialGrouper
 
-EAST_EUROPEAN_COUNTRIES = {'RUSSIA', 'TURKEY', 'UKRAINE', 'POLAND', 'BULGARIA', 'CROATIA', 'HUNGARY',
-                           'ROMANIA', 'SLOVAKIA', 'MOLDOVA', 'SLOVENIA', 'LITHUANIA', 'SERBIA', 'AZERBAIJAN',
-                           'CZECH REPUBLIC', 'GEORGIA', 'ESTONIA', 'BOSNIA & HERZEGOVINA', 'NORTH MACEDONIA',
-                           'FORMER YUGOSLAV MACEDONIA', 'ARMENIA', 'LATVIA', 'MONTENEGRO'}
 
-ECHR_ARTICLES = {
-                 # "0": "No Violation",
-                 "2": "Right to life",
-                 "3": "Prohibition of torture",
-                 "5": "Right to liberty and security",
-                 "6": "Right to a fair trial",
-                 "8": "Right to respect for private and family life",
-                 "9": "Freedom of thought, conscience and religion",
-                 "10": "Freedom of expression",
-                 "11": "Freedom of assembly and association",
-                 "14": "Prohibition of discrimination",
-                 "P1-1": "Protection of property",
-                 }
-
-GENDERS = {'n/a': 0, 'male': 1, 'female': 2}
-AGE_GROUPS = {'n/a': 0, '<=35': 1, '<=65': 2, '>65': 3}
-
-
-class ECtHRDataset(WILDSDataset):
+class SCOTUSDataset(WILDSDataset):
     """
-    ECtHR dataset.
-    This is a modified version of the 2021 ECtHR dataset.
+    SCOTUS dataset.
+    This is the 2021 SCOTUS dataset.
 
     Supported `split_scheme`:
         'official': official split
@@ -41,41 +19,41 @@ class ECtHRDataset(WILDSDataset):
         Case facts of maximum token length of 2048.
 
     Label (y):
-        y is a list of the ECHR article violations.
+        y is 1 if appeal is approved, otherwise 0
 
     Metadata:
-        defendant_state: Defendant State group (C.E. European, Rest of Europe)
-        applicant_gender: The gender of the applicant (N/A, Male, Female)
-        applicant_age: The age group of the applicant (N/A, <=35, <=64, or older)
+        respondent_type: The type of respondent, which is a manual categorization (clustering) of respondents (defendants) in five categories (person, public entity, organization, facility and other)
+        decision_direction: The direction of the decision, i.e., whether the decision is liberal, or conservative, provided by SCDB
 
     Website:
         https://github.com/coastalcph/fairlex
     """
-    _dataset_name = 'ecthr'
+    _dataset_name = 'fscs'
     _versions_dict = {
         '1.0': {
-            'download_url': 'https://zenodo.org/record/6322643/files/ecthr.zip',
+            'download_url': 'https://zenodo.org/record/6322643/files/scotus.zip',
             'compressed_size': 4_066_541_568
         },
     }
 
     def __init__(self, version=None, root_dir='data', download=False,
-                 split_scheme='official', group_by_fields='defendant_state'):
+                 split_scheme='official', group_by_fields='respondent_type'):
         self._version = version
         # the official split is the only split
         self._split_scheme = split_scheme
         self._y_type = 'long'
-        self._y_size = len(ECHR_ARTICLES)
-        self._n_classes = len(ECHR_ARTICLES)
+        self._y_size = 2
+        self._n_classes = 2
         # Load data
-        self.data_df = self.load_dataset()
+        self.data_df = self.read_dataset()
         print(self.data_df.head())
+
         # Get arrays
         self._input_array = list(self.data_df['text'])
         # Get metadata
         self._metadata_fields, self._metadata_array, self._metadata_map = self.load_metadata(self.data_df)
         # Get y from metadata
-        self._y_array = torch.FloatTensor(self.data_df['labels'])
+        self._y_array = torch.LongTensor(self.data_df['label'])
         # Set split info
         self.initialize_split_dicts()
         for split in self.split_dict:
@@ -104,7 +82,7 @@ class ECtHRDataset(WILDSDataset):
             - results (dictionary): Dictionary of evaluation metrics
             - results_str (str): String summarizing the evaluation metrics
         """
-        metric = F1(prediction_fn=binary_logits_to_pred_v2, average='macro')
+        metric = F1(prediction_fn=multiclass_logits_to_pred, average='macro')
         return self.standard_group_eval(
             metric,
             self._eval_grouper,
@@ -119,14 +97,14 @@ class ECtHRDataset(WILDSDataset):
 
     def load_metadata(self, data_df):
         # Get metadata
-        columns = ['defendant_state', 'applicant_age', 'applicant_gender']
-        metadata_fields = ['defendant_state', 'applicant_age', 'applicant_gender']
+        columns = ['respondent_type', 'decision_direction', 'y']
+        metadata_fields = ['respondent_type', 'decision_direction', 'y']
         metadata_df = data_df[columns].copy()
         metadata_df.columns = metadata_fields
         ordered_maps = {}
-        ordered_maps['defendant_state'] = range(0, 2)
-        ordered_maps['applicant_gender'] = range(0, 3)
-        ordered_maps['applicant_age'] = range(0, 4)
+        ordered_maps['respondent_type'] = range(0, 6)
+        ordered_maps['decision_direction'] = range(0, 2)
+        ordered_maps['y'] = range(0, 2)
         metadata_map, metadata = map_to_id_array(metadata_df, ordered_maps)
         return metadata_fields, torch.from_numpy(metadata.astype('long')), metadata_map
 
@@ -138,14 +116,14 @@ class ECtHRDataset(WILDSDataset):
         else:
             raise ValueError(f'Split scheme {self.split_scheme} not recognized')
 
-    def load_dataset(self):
+    def read_dataset(self):
         data = []
         for split in ['train', 'val', 'test']:
-            dataset = load_dataset('fairlex', 'ecthr', split=split)
+            dataset = load_dataset('fairlex', 'scotus', split=split)
             for example in dataset:
-                    example['y'] = example['labels']
-                    example['data_type'] = split
-                    data.append(example)
+                example['y'] = example['label']
+                example['data_type'] = split
+                data.append(example)
         df = pd.DataFrame(data)
         df = df.fillna("")
         return df

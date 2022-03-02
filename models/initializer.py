@@ -1,6 +1,5 @@
 import torch.nn as nn
-from models.bert.bert import LongformerClassifier, LongformerFeaturizer, \
-    HierBERTClassifier, HierBERTFeaturizer
+from models.bert.bert import HierBERTClassifier, HierBERTFeaturizer
 
 
 def initialize_model(config, d_out, is_featurizer=False):
@@ -18,14 +17,7 @@ def initialize_model(config, d_out, is_featurizer=False):
             If is_featurizer=False:
             - model: a model that is equivalent to nn.Sequential(featurizer, classifier)
     """
-    if 'longformer' in config.model:
-        if is_featurizer:
-            featurizer = initialize_longformer_model(config, d_out, is_featurizer)
-            classifier = nn.Linear(featurizer.d_out, d_out)
-            model = (featurizer, classifier)
-        else:
-            model = initialize_longformer_model(config, d_out)
-    elif 'bert' in config.model:
+    if 'minilm' in config.model:
         if is_featurizer:
             featurizer = initialize_hierbert_model(config, d_out, is_featurizer)
             classifier = nn.Linear(featurizer.d_out, d_out)
@@ -37,17 +29,6 @@ def initialize_model(config, d_out, is_featurizer=False):
         model = nn.Linear(in_features=5000, out_features=d_out, **config.model_kwargs)
     else:
         raise ValueError(f'Model: {config.model} not recognized.')
-    return model
-
-
-def initialize_longformer_model(config, d_out, is_featurizer=False):
-    if is_featurizer:
-        model = LongformerFeaturizer.from_pretrained(config.model, **config.model_kwargs)
-    else:
-        model = LongformerClassifier.from_pretrained(
-            config.model,
-            num_labels=d_out,
-            **config.model_kwargs)
     return model
 
 
