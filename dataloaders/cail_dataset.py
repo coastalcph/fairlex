@@ -73,6 +73,7 @@ class CAILDataset(WILDSDataset):
         # eval
         self.group_by_fields = group_by_fields
         self.initialize_eval_grouper()
+        self._data_dir = 'data/datasets'
         super().__init__(root_dir, download, split_scheme)
 
     def get_input(self, idx):

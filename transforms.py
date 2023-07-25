@@ -49,7 +49,7 @@ def initialize_bert_transform(config):
 
 
 def initialize_hierbert_transform(config):
-    assert 'bert' in config.model
+    assert 'bert' in config.model or 'minilm' in config.model
     assert config.max_segment_length is not None
     assert config.max_segments is not None
 
@@ -80,7 +80,7 @@ def initialize_hierbert_transform(config):
              paragraphs_tokens['attention_mask']),
             dim=2)
         # x = torch.squeeze(x, dim=0)
-        return x
+        return x.to(torch.long)
     return transform
 
 

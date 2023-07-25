@@ -63,6 +63,7 @@ class SCOTUSDataset(WILDSDataset):
         # eval
         self.group_by_fields = group_by_fields
         self.initialize_eval_grouper()
+        self._data_dir = 'data/datasets'
         super().__init__(root_dir, download, split_scheme)
 
     def get_input(self, idx):
@@ -118,11 +119,11 @@ class SCOTUSDataset(WILDSDataset):
 
     def read_dataset(self):
         data = []
-        for split in ['train', 'val', 'test']:
-            dataset = load_dataset('fairlex', 'scotus', split=split)
+        for split in ['train', 'validation', 'test']:
+            dataset = load_dataset('coastalcph/fairlex', 'scotus', split=split)
             for example in dataset:
                 example['y'] = example['label']
-                example['data_type'] = split
+                example['data_type'] = split if split != 'validation' else 'val'
                 data.append(example)
         df = pd.DataFrame(data)
         df = df.fillna("")

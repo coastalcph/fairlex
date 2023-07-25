@@ -33,11 +33,9 @@ class HierBERTClassifier(torch.nn.Module):
         # Init segment-wise transformer-based encoder
         self.seg_encoder = torch.nn.Transformer(d_model=self.bert_encoder.config.hidden_size,
                                                 nhead=self.bert_encoder.config.num_attention_heads,
-                                                batch_first=True,
                                                 dim_feedforward=self.bert_encoder.config.intermediate_size,
                                                 activation=self.bert_encoder.config.hidden_act,
                                                 dropout=self.bert_encoder.config.hidden_dropout_prob,
-                                                layer_norm_eps=self.bert_encoder.config.layer_norm_eps,
                                                 num_encoder_layers=2, num_decoder_layers=0).encoder
 
         # Init Classifier

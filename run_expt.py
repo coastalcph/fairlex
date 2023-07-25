@@ -13,7 +13,6 @@ from transforms import initialize_transform
 from configs.utils import populate_defaults
 import configs.supported as supported
 from dataloaders import get_dataset
-from data import MODELS_DIR
 import logging
 
 logging.getLogger("transformers").setLevel(logging.ERROR)
@@ -148,10 +147,6 @@ def main():
         split_scheme=config.split_scheme,
         group_by_fields=config.groupby_fields,
         **config.dataset_kwargs)
-
-    # Model
-    if 'longformer' in config.model or 'mini-roberta' in config.model or 'mini-xlm-roberta' in config.model:
-        config.model = os.path.join(MODELS_DIR, config.model)
 
     if config.model == 'logistic_regression':
         config.train_transform = 'tf-idf'

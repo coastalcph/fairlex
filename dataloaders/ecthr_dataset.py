@@ -12,7 +12,6 @@ EAST_EUROPEAN_COUNTRIES = {'RUSSIA', 'TURKEY', 'UKRAINE', 'POLAND', 'BULGARIA', 
                            'FORMER YUGOSLAV MACEDONIA', 'ARMENIA', 'LATVIA', 'MONTENEGRO'}
 
 ECHR_ARTICLES = {
-                 # "0": "No Violation",
                  "2": "Right to life",
                  "3": "Prohibition of torture",
                  "5": "Right to liberty and security",
@@ -23,6 +22,7 @@ ECHR_ARTICLES = {
                  "11": "Freedom of assembly and association",
                  "14": "Prohibition of discrimination",
                  "P1-1": "Protection of property",
+                 "NV": "No Violation",
                  }
 
 GENDERS = {'n/a': 0, 'male': 1, 'female': 2}
@@ -85,6 +85,7 @@ class ECtHRDataset(WILDSDataset):
         # eval
         self.group_by_fields = group_by_fields
         self.initialize_eval_grouper()
+        self._data_dir = 'data/datasets'
         super().__init__(root_dir, download, split_scheme)
 
     def get_input(self, idx):
@@ -140,12 +141,20 @@ class ECtHRDataset(WILDSDataset):
 
     def load_dataset(self):
         data = []
-        for split in ['train', 'val', 'test']:
-            dataset = load_dataset('fairlex', 'ecthr', split=split)
+        for split in ['train', 'validation', 'test']:
+            dataset = load_dataset('coastalcph/fairlex', 'ecthr', split=split)
             for example in dataset:
-                    example['y'] = example['labels']
-                    example['data_type'] = split
-                    data.append(example)
+                # Convert labels to many-hot
+                temp_labels = [0] * len(ECHR_ARTICLES)
+                for label_idx in example['labels']:
+                    temp_labels[label_idx] = 1
+                # If no label (no violation), set to last index
+                if sum(temp_labels) == 0:
+                    temp_labels[-1] = 1
+                example['y'] = example['labels'] if len(example['labels']) else [dataset.features['labels'].feature.num_classes]
+                example['labels'] = temp_labels
+                example['data_type'] = split if split != 'validation' else 'val'
+                data.append(example)
         df = pd.DataFrame(data)
         df = df.fillna("")
         return df
